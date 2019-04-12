@@ -2,21 +2,30 @@ import time
 
 
 class Pomodoro(object):
-    def __init__(self, work_time, rest_time):
+    def __init__(self, work_time, short_break, long_break, long_break_frequency):
         self.work_time = work_time
-        self.rest_time = rest_time
+        self.short_break = short_break
+        self.long_break = long_break
+        self.long_break_frequency = long_break_frequency
 
     def start(self):
-        self.start_activity('work')
-        self.start_activity('rest')
+        for i in range(self.long_break_frequency):
+            self.start_activity('work')
+            if i != self.long_break_frequency - 1:
+                self.start_activity('break')
+            else:
+                self.start_activity('long_break')
 
     def start_activity(self, activity):
         if activity == 'work':
-            print('Work time!')
+            print('work!')
             activity_time_min = self.work_time
+        elif activity == 'break':
+            print('break!')
+            activity_time_min = self.short_break
         else:
-            print('Rest time!')
-            activity_time_min = self.rest_time
+            print('long break!')
+            activity_time_min = self.long_break
 
         self.start_counter(activity_time_min)
 
@@ -32,8 +41,11 @@ class Pomodoro(object):
 
 def main():
     work_time = int(input('Set the work time in minutes: ').strip())
-    rest_time = int(input('Set the rest time in minutes: ').strip())
-    pomodoro = Pomodoro(work_time, rest_time)
+    short_break = int(input('Set the short rest time in minutes: ').strip())
+    long_break = int(input('Set the long break time in minutes: ').strip())
+    long_break_frequency = int(input('Set the long break frequency in minutes: ').strip())
+
+    pomodoro = Pomodoro(work_time, short_break, long_break, long_break_frequency)
     pomodoro.start()
 
 
