@@ -1,5 +1,10 @@
+import sys
 import time
 import asyncio
+
+
+is_paused = False
+
 
 class Pomodoro(object):
     def __init__(self, work_time, short_break, long_break, long_break_frequency):
@@ -7,6 +12,7 @@ class Pomodoro(object):
         self.short_break = short_break
         self.long_break = long_break
         self.long_break_frequency = long_break_frequency
+        self.is_paused = False
 
     async def start(self):
         for i in range(self.long_break_frequency):
@@ -39,15 +45,24 @@ class Pomodoro(object):
             await asyncio.sleep(1)
 
 
+def user_input(q):
+    asyncio.ensure_future(q.put(sys.stdin.readline()))
+    global is_paused
+    is_paused = not is_paused
+    print('Hi')
+
+
 def main():
     work_time = int(input('Set the work time in minutes: ').strip())
     short_break = int(input('Set the short rest time in minutes: ').strip())
     long_break = int(input('Set the long break time in minutes: ').strip())
     long_break_frequency = int(input('Set the long break frequency in minutes: ').strip())
-    loop = asyncio.get_event_loop()
     pomodoro = Pomodoro(work_time, short_break, long_break, long_break_frequency)
-    loop.run_until_complete(pomodoro.start())
 
+    q = asyncio.Queue()
+    loop = asyncio.get_event_loop()
+    loop.add_reader(sys.stdin, user_input, q)
+    loop.run_until_complete(pomodoro.start())
 
 
 if __name__ == '__main__':
