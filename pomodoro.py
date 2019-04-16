@@ -37,19 +37,28 @@ class Pomodoro(object):
 
     async def start_counter(self, activity_time_min):
         activity_time_sec = activity_time_min*60
-        for sec in range(activity_time_sec):
-            seconds = sec % 60
-            minutes = (sec // 60) % 60
-            hours = (sec)//3600
-            print(f'{hours}:{minutes}:{seconds}', end='\r')
+        sec = 0
+        while True:
             await asyncio.sleep(1)
+            if is_paused:
+                continue
+            else:
+                if sec <  activity_time_sec:
+                    seconds = sec % 60
+                    minutes = (sec // 60) % 60
+                    hours = (sec)//3600
+                    print(f'{hours}:{minutes}:{seconds}', end='\r')
+                    sec += 1
 
 
 def user_input(q):
     asyncio.ensure_future(q.put(sys.stdin.readline()))
     global is_paused
     is_paused = not is_paused
-    print('Hi')
+    if is_paused:
+        print('Paused')
+    else:
+        print('Continue')
 
 
 def main():
