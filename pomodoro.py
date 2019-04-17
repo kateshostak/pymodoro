@@ -1,4 +1,5 @@
 import sys
+import subprocess
 import time
 import asyncio
 
@@ -16,10 +17,13 @@ class Pomodoro(object):
 
     async def start(self):
         for i in range(self.long_break_frequency):
+            subprocess.run(["osascript", "-e", "display notification \"Work!\""])
             await self.start_activity('work')
             if i != self.long_break_frequency - 1:
+                subprocess.run(["osascript", "-e", "display notification \"Break!\" "])
                 await self.start_activity('break')
             else:
+                subprocess.run(["osascript", "-e", "display notification \"Break!\" "])
                 await self.start_activity('long_break')
 
     async def start_activity(self, activity):
@@ -47,9 +51,10 @@ class Pomodoro(object):
                     seconds = sec % 60
                     minutes = (sec // 60) % 60
                     hours = (sec)//3600
-                    print(f'{hours}:{minutes}:{seconds}', end='\r')
+                    print(f'{hours:02d}:{minutes:02d}:{seconds:02d}', end='\r')
                     sec += 1
-
+                else:
+                    break
 
 def user_input(q):
     asyncio.ensure_future(q.put(sys.stdin.readline()))
