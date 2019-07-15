@@ -1,81 +1,136 @@
+#!/usr/bin/python3 -tt
+
 import sys
 import subprocess
 import time
 import asyncio
+import sqlite3
 
 
-is_paused = False
+class Ticker(object):
+
+    def __init__(self, interval, callback):
+        self.interval = interval
+        self.callback = callback
+        self.is_paused = False
+
+    def toggle_pause(self):
+        self.is_paused = not self.is_paused
+
+    async def run(self, secs):
+        sec = 0
+        while sec < secs:
+            await asyncio.sleep(self.interval)
+            if self.is_paused:
+                continue
+            self.callback(sec)
+            sec += 1
 
 
 class Pomodoro(object):
-    def __init__(self, work_time, short_break, long_break, long_break_frequency):
-        self.work_time = work_time
-        self.short_break = short_break
-        self.long_break = long_break
-        self.long_break_frequency = long_break_frequency
+
+    WORK = 'work'
+    BREAK = 'break'
+    LONG_BREAK = 'long_break'
+
+    def __init__(
+        self, work_time, short_break, long_break, cycle_len
+    ):
+        self.durations = {
+            Pomodoro.WORK: work_time,
+            Pomodoro.BREAK: short_break,
+            Pomodoro.LONG_BREAK: long_break,
+        }
+
+        self.notifications = {
+            Pomodoro.WORK: "Work!",
+            Pomodoro.BREAK: "Break!",
+            Pomodoro.LONG_BREAK: "Long break!",
+        }
+
+        self.current_ticker = None
+
+        self.cycle_len = cycle_len
         self.is_paused = False
 
     async def start(self):
-        for i in range(self.long_break_frequency):
-            subprocess.run(["osascript", "-e", "display notification \"Work!\""])
-            await self.start_activity('work')
-            if i != self.long_break_frequency - 1:
-                subprocess.run(["osascript", "-e", "display notification \"Break!\" "])
-                await self.start_activity('break')
-            else:
-                subprocess.run(["osascript", "-e", "display notification \"Break!\" "])
-                await self.start_activity('long_break')
+        while True:
+#            activity = self.next()
+#            await self.start_activity(activity)
+
+            for i in range(self.cycle_len):
+                 await self.start_activity(Pomodoro.WORK)
+                 if i != self.cycle_len - 1:
+                     await self.start_activity(Pomodoro.BREAK)
+                 else:
+                     await self.start_activity(Pomodoro.LONG_BREAK)
 
     async def start_activity(self, activity):
-        if activity == 'work':
-            print('work!')
-            activity_time_min = self.work_time
-        elif activity == 'break':
-            print('break!')
-            activity_time_min = self.short_break
-        else:
-            print('long break!')
-            activity_time_min = self.long_break
+        self.show_notification(self.notifications[activity])
+        await self.run_activity(self.durations[activity])
 
-        await self.start_counter(activity_time_min)
+    async def run_activity(self, secs):
+        def tick(sec):
+            seconds = sec % 60
+            minutes = (sec // 60) % 60
+            hours = sec // 3600
+            print(f'{hours:02d}:{minutes:02d}:{seconds:02d}', end='\r')
 
-    async def start_counter(self, activity_time_min):
-        activity_time_sec = activity_time_min*60
-        sec = 0
-        while True:
-            await asyncio.sleep(1)
-            if is_paused:
-                continue
-            else:
-                if sec <  activity_time_sec:
-                    seconds = sec % 60
-                    minutes = (sec // 60) % 60
-                    hours = (sec)//3600
-                    print(f'{hours:02d}:{minutes:02d}:{seconds:02d}', end='\r')
-                    sec += 1
-                else:
-                    break
+        self.current_ticker = Ticker(1, tick)
+        await self.current_ticker.run(secs)
 
-def user_input(q):
+
+        # sec = 0
+        # while True:
+        #     await asyncio.sleep(1)
+        #     if self.is_paused:
+        #         continue
+        #     else:
+        #         if sec < secs:
+        #             seconds = sec % 60
+        #             minutes = (sec // 60) % 60
+        #             hours = (sec)//3600
+        #             print(f'{hours:02d}:{minutes:02d}:{seconds:02d}', end='\r')
+        #             sec += 1
+        #         else:
+        #             break
+
+    def show_notification(self, text):
+        subprocess.run([
+            "osascript", "-e", "display notification \"%s\"" % text
+        ])
+
+    def toggle_pause(self):
+        print('paused' if not self.is_paused else 'work')
+        self.is_paused = not self.is_paused
+
+        self.current_ticker.toggle_pause()
+
+
+def user_input(q, pomodoro):
     asyncio.ensure_future(q.put(sys.stdin.readline()))
-    global is_paused
-    is_paused = not is_paused
-    if is_paused:
-        print('Paused')
-    else:
-        print('Continue')
+    pomodoro.toggle_pause()
 
 
 def main():
-    work_time = int(input('Set the work time in minutes: ').strip())
-    short_break = int(input('Set the short rest time in minutes: ').strip())
-    long_break = int(input('Set the long break time in minutes: ').strip())
-    long_break_frequency = int(input('Set the long break frequency in minutes: ').strip())
-    pomodoro = Pomodoro(work_time, short_break, long_break, long_break_frequency)
+    # work_time = int(input('Set the work time in minutes: ').strip())
+    # short_break = int(input('Set the short rest time in minutes: ').strip())
+    # long_break = int(input('Set the long break time in minutes: ').strip())
+    # cycle_len = int(input('Set the long break frequency in minutes: ').strip())
+    # pomodoro = Pomodoro(work_time, short_break, long_break, cycle_len)
 
-    q = asyncio.Queue()
+    # parse args
+
+    # pomodoro with args
+    pomodoro = Pomodoro(10, 10, 10, 10)
+
+    # input_manager = InputManager()
+    # input_manager.register(pomodoro.toggle_pause)
+
     loop = asyncio.get_event_loop()
-    loop.add_reader(sys.stdin, user_input, q)
+    q = asyncio.Queue()
+    loop.add_reader(sys.stdin, user_input, q, pomodoro)
+
     loop.run_until_complete(pomodoro.start())
 
 
