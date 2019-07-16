@@ -5,7 +5,62 @@ import subprocess
 import time
 import asyncio
 import sqlite3
+from collections import namedtuple
 
+class ORM(object):
+
+    def __init__(self, path_to_db):
+        self.conn = self.connect_db(path_to_db)
+        self.cur = self.conn.cursor()
+        self.create_db()
+
+    def connect_db(self, path_to_db):
+            return sqlite3.connect(path_to_db)
+
+    def create_db(self):
+        self.cur.execute("pragma foreign_keys = 1")
+
+        self.cur.execute("""create table if not exists users (
+                   id integer primary key,
+                   name char(50) unique not null,
+                   work int default(25),
+                   short_break int default(5),
+                   long_break int default(15),
+                   cycle int default(4))""")
+
+        self.cur.execute("""create table if not exists stats (
+                           id integer primary key,
+                           start_focus float,
+                           end_focus float,
+                           foreign key(id) references users(id)
+                           )""")
+
+    def get_user(self, user_profile):
+        usr = self.create_user(user_profile)
+        return User(usr)
+
+    def create_user(self, user_profile):
+        try:
+            self.cur.execute("""insert into users(name) values(?)""", [user_profile.name])
+        except Exception as e:
+            print("User already exists")
+
+        usr = self.cur.execute("""select * from users where name=?""", [user_profile.name]).fetchone()
+        return usr
+
+    def update_user(self, user_profile):
+        self.cur.execute("""update users set work=?, short_break=?, long_break=?, cycle=? """, user_profile[1:])
+
+    def commit(self):
+        self.conn.commit()
+
+    def close(self):
+        self.conn.close()
+
+
+class User(object):
+    def __init__(self, params):
+        self.uid, self.name, self.work, self.short_break, self.long_break, self.cycle = params
 
 class Ticker(object):
 
@@ -33,13 +88,11 @@ class Pomodoro(object):
     BREAK = 'break'
     LONG_BREAK = 'long_break'
 
-    def __init__(
-        self, work_time, short_break, long_break, cycle_len
-    ):
+    def __init__(self, user):
         self.durations = {
-            Pomodoro.WORK: work_time,
-            Pomodoro.BREAK: short_break,
-            Pomodoro.LONG_BREAK: long_break,
+            Pomodoro.WORK: user.work,
+            Pomodoro.BREAK: user.short_break,
+            Pomodoro.LONG_BREAK:user.long_break,
         }
 
         self.notifications = {
@@ -50,7 +103,7 @@ class Pomodoro(object):
 
         self.current_ticker = None
 
-        self.cycle_len = cycle_len
+        self.cycle_len = user.cycle
         self.is_paused = False
 
     async def start(self):
@@ -80,21 +133,6 @@ class Pomodoro(object):
         await self.current_ticker.run(secs)
 
 
-        # sec = 0
-        # while True:
-        #     await asyncio.sleep(1)
-        #     if self.is_paused:
-        #         continue
-        #     else:
-        #         if sec < secs:
-        #             seconds = sec % 60
-        #             minutes = (sec // 60) % 60
-        #             hours = (sec)//3600
-        #             print(f'{hours:02d}:{minutes:02d}:{seconds:02d}', end='\r')
-        #             sec += 1
-        #         else:
-        #             break
-
     def show_notification(self, text):
         subprocess.run([
             "osascript", "-e", "display notification \"%s\"" % text
@@ -113,17 +151,16 @@ def user_input(q, pomodoro):
 
 
 def main():
-    # work_time = int(input('Set the work time in minutes: ').strip())
-    # short_break = int(input('Set the short rest time in minutes: ').strip())
-    # long_break = int(input('Set the long break time in minutes: ').strip())
-    # cycle_len = int(input('Set the long break frequency in minutes: ').strip())
-    # pomodoro = Pomodoro(work_time, short_break, long_break, cycle_len)
-
     # parse args
 
     # pomodoro with args
-    pomodoro = Pomodoro(10, 10, 10, 10)
-
+    uprofile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle_len'])
+    user_profile = uprofile('alice', 10, 10, 10, 10)
+    orm = ORM('pom.db')
+    user = orm.get_user(user_profile)
+    pomodoro = Pomodoro(user)
+    orm.commit()
+    orm.close()
     # input_manager = InputManager()
     # input_manager.register(pomodoro.toggle_pause)
 
