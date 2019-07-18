@@ -15,7 +15,7 @@ class ORM(object):
         self.create_db()
 
     def connect_db(self, path_to_db):
-            return sqlite3.connect(path_to_db)
+        return sqlite3.connect(path_to_db)
 
     def create_db(self):
         self.cur.execute("pragma foreign_keys = 1")
@@ -29,27 +29,26 @@ class ORM(object):
                    cycle int default(4))""")
 
         self.cur.execute("""create table if not exists stats (
-                           id integer primary key,
-                           start_focus float,
-                           end_focus float,
+                           id integer,
+                           start_time float,
+                           work integer,
                            foreign key(id) references users(id)
                            )""")
 
     def get_user(self, user_profile):
-        usr = self.create_user(user_profile)
+        usr = self.cur.execute("""select * from users where name=?""", (user_profile.name,)).fetchone()
         return User(usr)
 
     def create_user(self, user_profile):
-        try:
-            self.cur.execute("""insert into users(name) values(?)""", [user_profile.name])
-        except Exception as e:
-            print("User already exists")
-
-        usr = self.cur.execute("""select * from users where name=?""", [user_profile.name]).fetchone()
-        return usr
+        self.cur.execute("""insert into users(name, work, short_break, long_break, cycle) values(?, ?, ?, ?, ?)""", user_profile)
+        return self.get_user(user_profile)
 
     def update_user(self, user_profile):
         self.cur.execute("""update users set work=?, short_break=?, long_break=?, cycle=? """, user_profile[1:])
+        return self.get_user(user_profile)
+
+    def record_pomodoro(self, user_id, start_time, work):
+        self.cur.execute("""insert into stats(id, start_time, work) values(?, ?, ?)""", (user_id, start_time, work,))
 
     def commit(self):
         self.conn.commit()
@@ -88,11 +87,14 @@ class Pomodoro(object):
     BREAK = 'break'
     LONG_BREAK = 'long_break'
 
-    def __init__(self, user):
+    def __init__(self, user, orm):
+        self.user = user
+        self.orm = orm
+
         self.durations = {
-            Pomodoro.WORK: user.work,
-            Pomodoro.BREAK: user.short_break,
-            Pomodoro.LONG_BREAK:user.long_break,
+            Pomodoro.WORK: self.user.work,
+            Pomodoro.BREAK: self.user.short_break,
+            Pomodoro.LONG_BREAK:self.user.long_break,
         }
 
         self.notifications = {
@@ -103,7 +105,7 @@ class Pomodoro(object):
 
         self.current_ticker = None
 
-        self.cycle_len = user.cycle
+        self.cycle_len = self.user.cycle
         self.is_paused = False
 
     async def start(self):
@@ -112,11 +114,14 @@ class Pomodoro(object):
 #            await self.start_activity(activity)
 
             for i in range(self.cycle_len):
-                 await self.start_activity(Pomodoro.WORK)
-                 if i != self.cycle_len - 1:
-                     await self.start_activity(Pomodoro.BREAK)
-                 else:
-                     await self.start_activity(Pomodoro.LONG_BREAK)
+                start_time = time.time()
+                await self.start_activity(Pomodoro.WORK)
+
+                if i != self.cycle_len - 1:
+                    self.orm.record_pomodoro(self.user.uid, start_time, self.user.work)
+                    await self.start_activity(Pomodoro.BREAK)
+                else:
+                    await self.start_activity(Pomodoro.LONG_BREAK)
 
     async def start_activity(self, activity):
         self.show_notification(self.notifications[activity])
@@ -157,10 +162,13 @@ def main():
     uprofile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle_len'])
     user_profile = uprofile('alice', 10, 10, 10, 10)
     orm = ORM('pom.db')
-    user = orm.get_user(user_profile)
-    pomodoro = Pomodoro(user)
-    orm.commit()
-    orm.close()
+    try:
+        user = orm.get_user(user_profile)
+    except Exception as e:
+        print(e)
+        user = orm.create_user(user_profile)
+
+    pomodoro = Pomodoro(user, orm)
     # input_manager = InputManager()
     # input_manager.register(pomodoro.toggle_pause)
 
@@ -168,8 +176,12 @@ def main():
     q = asyncio.Queue()
     loop.add_reader(sys.stdin, user_input, q, pomodoro)
 
-    loop.run_until_complete(pomodoro.start())
-
+    try:
+        loop.run_until_complete(pomodoro.start())
+    except KeyboardInterrupt as e:
+       print(e)
+       orm.commit()
+       orm.close()
 
 if __name__ == '__main__':
     main()
