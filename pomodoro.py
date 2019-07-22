@@ -41,14 +41,24 @@ class ORM(object):
 
     def create_user(self, user_profile):
         self.cur.execute("""insert into users(name, work, short_break, long_break, cycle) values(?, ?, ?, ?, ?)""", user_profile)
+        self.commit()
         return self.get_user(user_profile)
 
     def update_user(self, user_profile):
-        self.cur.execute("""update users set work=?, short_break=?, long_break=?, cycle=? """, user_profile[1:])
+        self.cur.execute(
+                """update users set work=?, short_break=?, long_break=?, cycle=? """,
+                (user_profile.id,
+                user_profile.work,
+                user_profile.short_break,
+                user_profile.long_break,
+                user_profile.cycle)
+        )
+        self.commit()
         return self.get_user(user_profile)
 
     def record_pomodoro(self, user_id, start_time, work):
         self.cur.execute("""insert into stats(id, start_time, work) values(?, ?, ?)""", (user_id, start_time, work,))
+        self.commit()
 
     def commit(self):
         self.conn.commit()
@@ -176,12 +186,7 @@ def main():
     q = asyncio.Queue()
     loop.add_reader(sys.stdin, user_input, q, pomodoro)
 
-    try:
-        loop.run_until_complete(pomodoro.start())
-    except KeyboardInterrupt as e:
-       print(e)
-       orm.commit()
-       orm.close()
+    loop.run_until_complete(pomodoro.start())
 
 if __name__ == '__main__':
     main()
