@@ -114,24 +114,29 @@ class Pomodoro(object):
         }
 
         self.current_ticker = None
-
+        self.current_activity = None
+        self.current_counter = 0
         self.cycle_len = self.user.cycle
         self.is_paused = False
 
+    def next(self):
+        if self.current_activity == Pomodoro.WORK:
+            self.current_counter += 1
+            if self.current_counter == self.cycle_len:
+                self.current_activity = Pomodoro.LONG_BREAK
+                self.current_counter = 0
+            else:
+                self.current_activity = Pomodoro.BREAK
+            return self.current_activity
+        else:
+            self.current_activity = Pomodoro.WORK
+            return self.current_activity
+
     async def start(self):
         while True:
-#            activity = self.next()
-#            await self.start_activity(activity)
-
-            for i in range(self.cycle_len):
-                start_time = time.time()
-                await self.start_activity(Pomodoro.WORK)
-
-                if i != self.cycle_len - 1:
-                    self.orm.record_pomodoro(self.user.uid, start_time, self.user.work)
-                    await self.start_activity(Pomodoro.BREAK)
-                else:
-                    await self.start_activity(Pomodoro.LONG_BREAK)
+            activity = self.next()
+            start_time = time.time()
+            await self.start_activity(activity)
 
     async def start_activity(self, activity):
         self.show_notification(self.notifications[activity])
@@ -170,7 +175,7 @@ def main():
 
     # pomodoro with args
     uprofile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle_len'])
-    user_profile = uprofile('alice', 10, 10, 10, 10)
+    user_profile = uprofile('sam', 10, 10, 10, 4)
     orm = ORM('pom.db')
     try:
         user = orm.get_user(user_profile)
