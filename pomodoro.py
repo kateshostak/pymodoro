@@ -83,13 +83,13 @@ class Ticker(object):
         self.is_paused = not self.is_paused
 
     async def run(self, secs):
-        sec = 0
-        while sec < secs:
+        sec = secs
+        while sec >= 0:
             await asyncio.sleep(self.interval)
             if self.is_paused:
                 continue
             self.callback(sec)
-            sec += 1
+            sec -= 1
 
 
 class Pomodoro(object):
@@ -183,7 +183,7 @@ def main():
     # parse args
     # pomodoro with args
     uprofile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle_len'])
-    user_profile = uprofile('kate', 30*60, 5*60, 10*60, 4)
+    user_profile = uprofile('bob', 30*60, 5, 5, 3)
     orm = ORM('pom.db')
     try:
         user = orm.get_user(user_profile)
