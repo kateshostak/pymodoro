@@ -5,6 +5,7 @@ import subprocess
 import time
 import asyncio
 import sqlite3
+import argparse
 from collections import namedtuple
 
 class ORM(object):
@@ -137,6 +138,7 @@ class Pomodoro(object):
             activity = self.next()
             start_time = time.time()
             await self.start_activity(activity)
+            self.orm.record_pomodoro(self.user.uid, start_time, self.user.work)
 
     async def start_activity(self, activity):
         self.show_notification(self.notifications[activity])
@@ -169,13 +171,19 @@ def user_input(q, pomodoro):
     asyncio.ensure_future(q.put(sys.stdin.readline()))
     pomodoro.toggle_pause()
 
+class Parser(object):
+    def __init__(self):
+       self.parser = argparse.ArgumentParser()
+       self.parser.add_argument('name', help='Name of the pomodoro user', action='store')
+
+    def parse_args(self):
+        self.parser.parse_args()
 
 def main():
     # parse args
-
     # pomodoro with args
     uprofile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle_len'])
-    user_profile = uprofile('sam', 10, 10, 10, 4)
+    user_profile = uprofile('kate', 30*60, 5*60, 10*60, 4)
     orm = ORM('pom.db')
     try:
         user = orm.get_user(user_profile)
