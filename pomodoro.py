@@ -47,18 +47,19 @@ class ORM(object):
 
     def update_user(self, user_profile):
         self.cur.execute(
-                """update users set work=?, short_break=?, long_break=?, cycle=? """,
-                (user_profile.id,
+                """update users set work=?, short_break=?, long_break=?, cycle=? where id=? """,
+                (
                 user_profile.work,
                 user_profile.short_break,
                 user_profile.long_break,
-                user_profile.cycle)
+                user_profile.cycle,
+                user_profile.id)
         )
         self.commit()
         return self.get_user(user_profile)
 
-    def record_pomodoro(self, user_id, start_time, work):
-        self.cur.execute("""insert into stats(id, start_time, work) values(?, ?, ?)""", (user_id, start_time, work,))
+    def record_pomodoro(self, user_profile, start_time):
+        self.cur.execute("""insert into stats(id, start_time, work) values(?, ?, ?)""", (user_profile.id, start_time, user_profile.work))
         self.commit()
 
     def commit(self):
@@ -70,7 +71,7 @@ class ORM(object):
 
 class User(object):
     def __init__(self, params):
-        self.uid, self.name, self.work, self.short_break, self.long_break, self.cycle = params
+        self.id, self.name, self.work, self.short_break, self.long_break, self.cycle = params
 
 class Ticker(object):
 
@@ -138,7 +139,7 @@ class Pomodoro(object):
             activity = self.next()
             start_time = time.time()
             await self.start_activity(activity)
-            self.orm.record_pomodoro(self.user.uid, start_time, self.user.work)
+            self.orm.record_pomodoro(self.user, start_time)
 
     async def start_activity(self, activity):
         self.show_notification(self.notifications[activity])
@@ -157,7 +158,7 @@ class Pomodoro(object):
 
     def show_notification(self, text):
         subprocess.run([
-            "osascript", "-e", "display notification \"%s\"" % text
+            "osascript", "-e", "display notification \"%s\" with title \"PyModoro\" sound name \"Submarine\"" % text
         ])
 
     def toggle_pause(self):
@@ -175,7 +176,7 @@ class Parser(object):
     def __init__(self):
        self.parser = argparse.ArgumentParser()
        self.parser.add_argument('name', help='Name of the pomodoro user', action='store')
-
+       self.parser.add_argument('work')
     def parse_args(self):
         self.parser.parse_args()
 
@@ -183,7 +184,7 @@ def main():
     # parse args
     # pomodoro with args
     uprofile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle_len'])
-    user_profile = uprofile('bob', 30*60, 5, 5, 3)
+    user_profile = uprofile('kate', 30*60, 5*60, 8*60, 4)
     orm = ORM('pom.db')
     try:
         user = orm.get_user(user_profile)
