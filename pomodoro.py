@@ -139,7 +139,8 @@ class Pomodoro(object):
             activity = self.next()
             start_time = time.time()
             await self.start_activity(activity)
-            self.orm.record_pomodoro(self.user, start_time)
+            if self.current_activity == Pomodoro.WORK:
+                self.orm.record_pomodoro(self.user, start_time)
 
     async def start_activity(self, activity):
         self.show_notification(self.notifications[activity])
