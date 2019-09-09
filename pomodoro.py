@@ -37,23 +37,28 @@ class ORM(object):
                            )""")
 
     def get_user(self, user_profile):
-        usr = self.cur.execute("""select * from users where name=?""", (user_profile.name,)).fetchone()
-        return User(usr)
+        user = self.cur.execute("""select * from users where name=?""", (user_profile.name,)).fetchone()
+        if user:
+            return User(user)
+        return None
 
     def create_user(self, user_profile):
-        self.cur.execute("""insert into users(name, work, short_break, long_break, cycle) values(?, ?, ?, ?, ?)""", user_profile)
+        self.cur.execute(
+                """insert into users(name, work, short_break, long_break, cycle) values(?, ?, ?, ?, ?)""",
+                (user_profile.name, user_profile.work_time, user_profile.short_break, user_profile.long_break, user_profile.cycle)
+        )
         self.commit()
         return self.get_user(user_profile)
 
     def update_user(self, user_profile):
         self.cur.execute(
-                """update users set work=?, short_break=?, long_break=?, cycle=? where id=? """,
+            """update users set work=?, short_break=?, long_break=?, cycle=? where name=? """,
                 (
-                user_profile.work,
-                user_profile.short_break,
-                user_profile.long_break,
-                user_profile.cycle,
-                user_profile.id)
+                    user_profile.work_time,
+                    user_profile.short_break,
+                    user_profile.long_break,
+                    user_profile.cycle,
+                    user_profile.name)
         )
         self.commit()
         return self.get_user(user_profile)
@@ -175,23 +180,45 @@ def user_input(q, pomodoro):
 
 class Parser(object):
     def __init__(self):
-       self.parser = argparse.ArgumentParser()
+       self.parser = argparse.ArgumentParser(
+               prog='Pymodoro',
+               description='Simple timer for Pomodoro Technique',
+               usage='%(prog)s name -p [work_time, short_break, long_break,cycle]'
+        )
        self.parser.add_argument('name', help='Name of the pomodoro user', action='store')
-       self.parser.add_argument('work')
+       self.parser.add_argument(
+               '-p',
+               '--profile',
+               metavar=('work_time', 'short_break', 'long_break', 'cycle'),
+               nargs=4,
+               type=int,
+               action='store'
+               )
+
     def parse_args(self):
-        self.parser.parse_args()
+        return self.parser.parse_args()
 
 def main():
-    # parse args
-    # pomodoro with args
-    uprofile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle_len'])
-    user_profile = uprofile('kate', 30*60, 5*60, 8*60, 4)
+    parser = Parser()
+    args = parser.parse_args()
+    Profile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle', 'update'], defaults=[None, 25, 5, 10, 4, False])
+    if args.profile:
+        user_profile = Profile(
+                name=args.name,
+                work_time=args.profile[0],
+                short_break=args.profile[1],
+                long_break=args.profile[2],
+                cycle=args.profile[3],
+                update=True
+                )
+    else:
+        user_profile = Profile(args.name)
     orm = ORM('pom.db')
-    try:
-        user = orm.get_user(user_profile)
-    except Exception as e:
-        print(e)
+    user = orm.get_user(user_profile)
+    if not user:
         user = orm.create_user(user_profile)
+    if user_profile.update:
+        user = orm.update_user(user_profile)
 
     pomodoro = Pomodoro(user, orm)
     # input_manager = InputManager()
