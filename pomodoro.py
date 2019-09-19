@@ -10,13 +10,10 @@ from collections import namedtuple
 
 class ORM(object):
 
-    def __init__(self, path_to_db):
-        self.conn = self.connect_db(path_to_db)
+    def __init__(self, path_to_db='pom.db'):
+        self.conn = sqlite3.connect(path_to_db)
         self.cur = self.conn.cursor()
         self.create_db()
-
-    def connect_db(self, path_to_db):
-        return sqlite3.connect(path_to_db)
 
     def create_db(self):
         self.cur.execute("pragma foreign_keys = 1")
@@ -199,9 +196,9 @@ class Parser(object):
         return self.parser.parse_args()
 
 def main():
+    Profile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle', 'update'], defaults=[None, 25, 5, 10, 4, False])
     parser = Parser()
     args = parser.parse_args()
-    Profile = namedtuple('Profile',['name', 'work_time', 'short_break', 'long_break', 'cycle', 'update'], defaults=[None, 25, 5, 10, 4, False])
     if args.profile:
         user_profile = Profile(
                 name=args.name,
@@ -213,7 +210,8 @@ def main():
                 )
     else:
         user_profile = Profile(args.name)
-    orm = ORM('pom.db')
+
+    orm = ORM()
     user = orm.get_user(user_profile)
     if not user:
         user = orm.create_user(user_profile)
