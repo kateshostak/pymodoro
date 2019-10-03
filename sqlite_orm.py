@@ -28,7 +28,7 @@ class SqliteORM(object):
                            foreign key(id) references users(id)
                            )""")
 
-    def get_user(self, name):
+    def get_user(self, name, setting):
         user = self.cur.execute(
                 """select * from users where name=?""",
                 (name,)
@@ -48,16 +48,16 @@ class SqliteORM(object):
                 values(?, ?, ?, ?, ?)""",
                 (
                     user_profile.name,
-                    user_profile.work_time,
-                    user_profile.short_break,
-                    user_profile.long_break,
+                    user_profile.work,
+                    user_profile.shortbreak,
+                    user_profile.longbreak,
                     user_profile.cycle
                     )
         )
         self.commit()
-        return self.get_user(user_profile.name)
 
     def update_user(self, user_profile):
+
         self.cur.execute(
             """update users set
             work=?,
@@ -66,15 +66,14 @@ class SqliteORM(object):
             cycle=?
             where name=? """,
             (
-                user_profile.work_time,
-                user_profile.short_break,
-                user_profile.long_break,
+                user_profile.work,
+                user_profile.shortbreak,
+                user_profile.longbreak,
                 user_profile.cycle,
                 user_profile.name
                 )
         )
         self.commit()
-        return self.get_user(user_profile.name)
 
     def record_pomodoro(self, user_profile, start_time):
         self.cur.execute(

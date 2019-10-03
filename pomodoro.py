@@ -7,6 +7,7 @@ from collections import namedtuple
 
 from user import User
 from orm import ORM
+from arguments_parser import ArgParser
 
 
 class Ticker(object):
@@ -106,54 +107,51 @@ class Pomodoro(object):
         self.current_ticker.toggle_pause()
 
 
+class PymodoroManager():
+    RUN = 'run'
+    NEW = 'new'
+    DELETE = 'delete'
+    UPDATE = 'update'
+
+    def __init__(self):
+        self.argparser = ArgParser()
+        self.command, self.args = self.argparser.parse_args()
+        self.orm = ORM.get_orm(ORM.SQLITE, 'pom.db')
+        self.command_to_func = {
+                PymodoroManager.RUN: self.start_pymodoro,
+                PymodoroManager.NEW: self.create_user,
+                PymodoroManager.UPDATE: self.update_user
+                }
+        self.loop = asyncio.get_event_loop()
+        self.q = asyncio.Queue()
+
+    def start(self, *args, **kwargs):
+        self.command_to_func[self.command](*args, **kwargs)
+
+    def start_pymodoro(self):
+        user = self.orm.get_user(self.args.name, self.args.setting)
+        if not user:
+            print(f'No user with name {self.args.name} was found')
+        else:
+            pomodoro = Pomodoro(user, self.orm)
+            self.loop.add_reader(sys.stdin, user_input, self.q, pomodoro)
+            self.loop.run_until_complete(pomodoro.start())
+
+    def create_user(self):
+        self.orm.create_user(self.args)
+        print(f'User {self.args.name} was created.')
+
+    def update_user(self):
+        self.orm.update_user(self.args)
+
 def user_input(q, pomodoro):
     asyncio.ensure_future(q.put(sys.stdin.readline()))
     pomodoro.toggle_pause()
 
 
-class Parser(object):
-    def __init__(self):
-        self.parser = argparse.ArgumentParser(
-                prog='Pymodoro',
-                description='Simple timer for Pomodoro Technique',
-                usage='%(prog)s name -p [work_time, short_break, long_break,cycle]'
-                )
-        self.parser.add_argument('name', help='Name of the pomodoro user', action='store')
-        self.parser.add_argument(
-                '-p',
-                '--profile',
-                metavar=('work_time', 'short_break', 'long_break', 'cycle'),
-                nargs=4,
-                type=int,
-                action='store'
-                )
-
-    def parse_args(self):
-        return self.parser.parse_args()
-
-
 def main():
-    Profile = namedtuple(
-            'Profile',
-            [
-                'name',
-                'work_time',
-                'short_break',
-                'long_break',
-                'cycle',
-                'update'
-                ],
-            defaults=[
-                None,
-                25*60,
-                5*60,
-                10*60,
-                4,
-                False
-                ]
-            )
-
-
+    manager = PymodoroManager()
+    manager.start()
     # parser = Parser()
     # common_options, command, command_options = parser.parse()
     #
@@ -167,37 +165,9 @@ def main():
     # if command == "run":
     #       superclass.handle_run(command_options)
 
-    parser = Parser()
-    args = parser.parse_args()
-    if args.profile:
-        user_profile = Profile(
-                name=args.name,
-                work_time=args.profile[0]*60,
-                short_break=args.profile[1]*60,
-                long_break=args.profile[2]*60,
-                cycle=args.profile[3],
-                update=True
-                )
-    else:
-        user_profile = Profile(args.name)
-
-    # orm = ORM(ORM.JSON, 'data.json')
-    #orm = ORM('sqlite', 'pom.orm')
-    # orm = orm.get_orm()
-
-    orm = ORM.get_orm(ORM.JSON, 'data.json')
-    user = orm.get_user(user_profile.name)
-    if not user:
-        user = orm.create_user(user_profile)
-    elif user_profile.update:
-        user = orm.update_user(user_profile)
-
-    pomodoro = Pomodoro(user, orm)
     # input_manager = InputManager()
     # input_manager.register(pomodoro.toggle_pause)
 
-    loop = asyncio.get_event_loop()
-    q = asyncio.Queue()
-    loop.add_reader(sys.stdin, user_input, q, pomodoro)
 
-    loop.run_until_complete(pomodoro.start())
+if __name__ == '__main__':
+    main()
