@@ -42,9 +42,9 @@ class Pomodoro(object):
         self.orm = orm
 
         self.durations = {
-            Pomodoro.WORK: self.user.work_time,
-            Pomodoro.BREAK: self.user.short_break,
-            Pomodoro.LONG_BREAK: self.user.long_break,
+            Pomodoro.WORK: self.user.work,
+            Pomodoro.BREAK: self.user.shortbreak,
+            Pomodoro.LONG_BREAK: self.user.longbreak,
         }
 
         self.notifications = {
@@ -116,11 +116,12 @@ class PymodoroManager():
     def __init__(self):
         self.argparser = ArgParser()
         self.command, self.args = self.argparser.parse_args()
-        self.orm = ORM.get_orm(ORM.SQLITE, 'pom.db')
+        self.orm = ORM.get_orm(ORM.SQLITE, 'new_pom.db')
         self.command_to_func = {
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,
-                PymodoroManager.UPDATE: self.update_user
+                PymodoroManager.UPDATE: self.update_user,
+                PymodoroManager.DELETE: self.delete_user
                 }
         self.loop = asyncio.get_event_loop()
         self.q = asyncio.Queue()
@@ -139,10 +140,16 @@ class PymodoroManager():
 
     def create_user(self):
         self.orm.create_user(self.args)
-        print(f'User {self.args.name} was created.')
+        print(f'User {self.args.name} was created')
 
     def update_user(self):
         self.orm.update_user(self.args)
+        print(f'User {self.args.name} was updated')
+
+    def delete_user(self):
+        self.orm.delete_user(self.args.name)
+        print(f'User {self.args.name} was deleted')
+
 
 def user_input(q, pomodoro):
     asyncio.ensure_future(q.put(sys.stdin.readline()))

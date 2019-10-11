@@ -5,6 +5,7 @@ from user import User
 
 class JsonORM(object):
     def __init__(self, path_to_file):
+        self.type = 'json'
         self.path_to_file = path_to_file
         self.create_db()
 
@@ -43,32 +44,34 @@ class JsonORM(object):
                     }
         return users_dict
 
-    def get_user(self, name):
+    def get_user(self, name, setting):
         users_dict = self.make_dict()
         if name in users_dict:
             return users_dict[name]
         else:
             return None
 
-    def create_user(self, user_profile):
+    def create_user(self, user):
+
         new_user = {
-                'name': user_profile.name,
-                'work_time': user_profile.work_time,
-                'short_break': user_profile.short_break,
-                'long_break': user_profile.long_break,
-                'cycle': user_profile.cycle,
+                'name': user.name,
+                'work_time': user.work,
+                'short_break': user.shortbreak,
+                'long_break': user.longbreak,
+                'cycle': user.cycle,
                 'statistics': []
                 }
         users = self.load_json()
         users.append(new_user)
         self.write_json(users)
-        return self.get_user(user_profile.name)
 
-    def update_user(self, user_profile):
+    def update_user(self, user):
         users = self.load_json()
-        self.update_json(users, user_profile)
+        self.update_json(users, user)
         self.write_json(users)
-        return self.get_user(user_profile.name)
+
+    def delete_user(self, name):
+        pass
 
     def update_json(self, users, user_profile):
         for user in users:
@@ -90,6 +93,6 @@ class JsonORM(object):
     def stats_dict(self, user_profile, start_time):
         stats = {
                 'start_time': start_time,
-                'work_time': user_profile.work_time
+                'work_time': user_profile.work
                 }
         return stats

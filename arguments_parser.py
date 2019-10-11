@@ -27,13 +27,22 @@ class NewParser():
 
 class UpdateParser():
     def __init__(self):
-        self.parser= argparse.ArgumentParser()
+        self.parser = argparse.ArgumentParser()
         self.parser.add_argument('--name', required=True)
         self.parser.add_argument('--settings', required=True)
-        self.parser.add_argument('--work', type=int)
-        self.parser.add_argument('--shortbreak', type=int, required=True)
-        self.parser.add_argument('--longbreak', type=int, required=True)
-        self.parser.add_argument('--cycle', type=int, required=True)
+        self.parser.add_argument('--work', type=int, default=None)
+        self.parser.add_argument('--shortbreak', type=int, default=None)
+        self.parser.add_argument('--longbreak', type=int, default=None)
+        self.parser.add_argument('--cycle', type=int, default=None)
+
+    def parse_args(self, args):
+        return self.parser.parse_args(args)
+
+
+class DeleteParser():
+    def __init__(self):
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument('--name', required=True)
 
     def parse_args(self, args):
         return self.parser.parse_args(args)
@@ -45,8 +54,11 @@ class ArgParser():
         self.parser.add_argument('command')
         self.parser.add_argument('args', nargs='*')
 
-    def parse_args(self):
-        args = self.parser.parse_args()
+    def parse_args(self, *args):
+        if args:
+            args = self.parser.parse_args(args[0])
+        else:
+            args = self.parser.parse_args()
         return args.command, self.subparse_args(args.command, args.args)
 
     def subparse_args(self, command, args):
@@ -65,7 +77,8 @@ class SubparserManager():
     command_to_subparser = {
             RUN: RunParser,
             NEW: NewParser,
-            UPDATE: UpdateParser
+            UPDATE: UpdateParser,
+            DELETE: DeleteParser
             }
 
     def __init__(self, command):

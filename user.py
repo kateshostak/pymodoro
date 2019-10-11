@@ -1,9 +1,13 @@
 class User(object):
 
-    def __init__(self, uid, name, work_time, short_break, long_break, cycle):
-        self.id = uid
+    def __init__(self, id_, name, work, shortbreak, longbreak, cycle):
+        self.id = id_
         self.name = name
-        self.work_time = work_time
-        self.short_break = short_break
-        self.long_break = long_break
+        self.work= work
+        self.shortbreak = shortbreak
+        self.longbreak = longbreak
         self.cycle = cycle
+
+    def __str__(self):
+        user_str = f'id::{self.id}, name::{self.name}'
+        return user_str

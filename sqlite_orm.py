@@ -6,6 +6,7 @@ from user import User
 class SqliteORM(object):
 
     def __init__(self, path_to_db):
+        self.type = 'sqlite'
         self.conn = sqlite3.connect(path_to_db)
         self.cur = self.conn.cursor()
         self.create_db()
@@ -39,13 +40,15 @@ class SqliteORM(object):
 
     def create_user(self, user_profile):
         self.cur.execute(
-                """insert into users(
+                """
+                insert into users(
                 name,
                 work,
                 short_break,
                 long_break,
                 cycle)
-                values(?, ?, ?, ?, ?)""",
+                values(?, ?, ?, ?, ?)
+                """,
                 (
                     user_profile.name,
                     user_profile.work,
@@ -57,14 +60,15 @@ class SqliteORM(object):
         self.commit()
 
     def update_user(self, user_profile):
-
         self.cur.execute(
-            """update users set
-            work=?,
-            short_break=?,
-            long_break=?,
-            cycle=?
-            where name=? """,
+            """
+            update users set
+            work=coalesce(?, work),
+            short_break=coalesce(?, short_break),
+            long_break=coalesce(?, long_break),
+            cycle=coalesce(?, cycle)
+            where name=?
+            """,
             (
                 user_profile.work,
                 user_profile.shortbreak,
@@ -75,15 +79,22 @@ class SqliteORM(object):
         )
         self.commit()
 
-    def record_pomodoro(self, user_profile, start_time):
+    def delete_user(self, name):
+        user_id = self.get_user(name, 0).id
+        self.cur.execute("delete from stats where id=?",(user_id,))
+        self.cur.execute("delete from users where name=?",(name,))
+        self.commit()
+
+
+    def record_pomodoro(self, user, start_time):
         self.cur.execute(
             """insert into stats(id, start_time, work) values(?, ?, ?)""",
-            (user_profile.id, start_time, user_profile.work_time)
+            (user.id, start_time, user.work)
         )
-        self.commit()
 
     def commit(self):
         self.conn.commit()
 
     def close(self):
         self.conn.close()
+
