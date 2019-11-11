@@ -26,43 +26,26 @@ class JsonORM(object):
             try:
                 return json.load(fp)
             except ValueError:
-                return list()
-
-    def make_dict(self):
-        users = self.load_json()
-        users_dict = {}
-        for user in users:
-            users_dict = {
-                    user['name']: User(
-                        None,
-                        user['name'],
-                        user['work_time'],
-                        user['short_break'],
-                        user['long_break'],
-                        user['cycle']
-                        )
-                    }
-        return users_dict
+                return dict()
 
     def get_user(self, name, setting):
-        users_dict = self.make_dict()
+        users_dict = self.load_json()
         if name in users_dict:
-            return users_dict[name]
+            user = users_dict[name]
+            return User(None, name, user['work'], user['shortbreak'], user['longbreak'], user['cycle'])
         else:
             return None
 
     def create_user(self, user):
-
         new_user = {
-                'name': user.name,
-                'work_time': user.work,
-                'short_break': user.shortbreak,
-                'long_break': user.longbreak,
+                'work': user.work,
+                'shortbreak': user.shortbreak,
+                'longbreak': user.longbreak,
                 'cycle': user.cycle,
                 'statistics': []
                 }
         users = self.load_json()
-        users.append(new_user)
+        users[user.name] = new_user
         self.write_json(users)
 
     def update_user(self, user):
@@ -71,23 +54,25 @@ class JsonORM(object):
         self.write_json(users)
 
     def delete_user(self, name):
-        pass
+        users = self.load_json()
+        if name in users:
+            users.pop(name)
+            self.write_json(users)
+            return True
+        return False
 
     def update_json(self, users, user_profile):
-        for user in users:
-            if user['name'] == user_profile.name:
-                user['work_time'] = user_profile.work_time
-                user['short_break'] = user_profile.short_break
-                user['long_break'] = user_profile.long_break
-                user['cycle'] = user_profile.cycle
+        name = user_profile.name
+        user = users[name]
+        users[name]['work'] = user_profile.work or user['work']
+        users[name]['shortbreak'] = user_profile.shortbreak or user['shortbreak']
+        users[name]['longbreak'] = user_profile.longbreak or user['longbreak']
+        users[name]['cycle'] = user_profile.cycle or user['cycle']
 
     def record_pomodoro(self, user_profile, start_time):
         users = self.load_json()
         stats = self.stats_dict(user_profile, start_time)
-        for user in users:
-            if user['name'] == user_profile.name:
-                user['statistics'].append(stats)
-
+        users[user_profile.name]['statistics'].append(stats)
         self.write_json(users)
 
     def stats_dict(self, user_profile, start_time):
