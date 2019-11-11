@@ -117,6 +117,7 @@ class PymodoroManager():
         self.argparser = ArgParser()
         self.command, self.args = self.argparser.parse_args()
         self.orm = ORM.get_orm(ORM.SQLITE, 'new_pom.db')
+        self.orm = ORM.get_orm(ORM.JSON, 'data.json')
         self.command_to_func = {
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,
@@ -143,12 +144,15 @@ class PymodoroManager():
         print(f'User {self.args.name} was created')
 
     def update_user(self):
-        self.orm.update_user(self.args)
-        print(f'User {self.args.name} was updated')
+        res = self.orm.update_user(self.args)
+        if res:
+            print(f'User {self.args.name} was updated')
+        else:
+            print(f'No user with name {self.args.name} was found ')
 
     def delete_user(self):
         res = self.orm.delete_user(self.args.name)
-        if res != 0:
+        if res:
             print(f'User {self.args.name} was deleted')
         else:
             print(f'No user with name {self.args.name} was found')

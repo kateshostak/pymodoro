@@ -50,8 +50,11 @@ class JsonORM(object):
 
     def update_user(self, user):
         users = self.load_json()
-        self.update_json(users, user)
-        self.write_json(users)
+        if user.name in users:
+            self.update_json(users, user)
+            self.write_json(users)
+            return True
+        return False
 
     def delete_user(self, name):
         users = self.load_json()
