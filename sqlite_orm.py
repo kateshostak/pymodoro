@@ -80,11 +80,14 @@ class SqliteORM(object):
         self.commit()
 
     def delete_user(self, name):
-        user_id = self.get_user(name, 0).id
-        self.cur.execute("delete from stats where id=?",(user_id,))
-        self.cur.execute("delete from users where name=?",(name,))
-        self.commit()
-
+        user = self.get_user(name, 0)
+        if user:
+            user_id = user.id
+            self.cur.execute("delete from stats where id=?",(user_id,))
+            self.cur.execute("delete from users where name=?",(name,))
+            self.commit()
+            return True
+        return False
 
     def record_pomodoro(self, user, start_time):
         self.cur.execute(

@@ -147,9 +147,11 @@ class PymodoroManager():
         print(f'User {self.args.name} was updated')
 
     def delete_user(self):
-        self.orm.delete_user(self.args.name)
-        print(f'User {self.args.name} was deleted')
-
+        res = self.orm.delete_user(self.args.name)
+        if res != 0:
+            print(f'User {self.args.name} was deleted')
+        else:
+            print(f'No user with name {self.args.name} was found')
 
 def user_input(q, pomodoro):
     asyncio.ensure_future(q.put(sys.stdin.readline()))
