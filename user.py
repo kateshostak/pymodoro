@@ -11,3 +11,6 @@ class User(object):
     def __str__(self):
         user_str = f'id::{self.id}, name::{self.name}'
         return user_str
+
+    def update_param(self, param, value):
+        pass
