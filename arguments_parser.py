@@ -1,4 +1,5 @@
 import argparse
+import pdb
 
 
 class RunParser():
@@ -56,6 +57,7 @@ class ArgParser():
 
     def parse_args(self, *args):
         if args:
+            pdb.set_trace()
             args = self.parser.parse_args(args[0])
         else:
             args = self.parser.parse_args()
