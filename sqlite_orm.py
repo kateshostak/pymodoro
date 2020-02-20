@@ -39,25 +39,29 @@ class SqliteORM(object):
         return None
 
     def create_user(self, user_profile):
-        self.cur.execute(
-                """
-                insert into users(
-                name,
-                work,
-                short_break,
-                long_break,
-                cycle)
-                values(?, ?, ?, ?, ?)
-                """,
-                (
-                    user_profile.name,
-                    user_profile.work,
-                    user_profile.shortbreak,
-                    user_profile.longbreak,
-                    user_profile.cycle
-                    )
-        )
-        self.commit()
+        try:
+            self.cur.execute(
+                    """
+                    insert into users(
+                    name,
+                    work,
+                    short_break,
+                    long_break,
+                    cycle)
+                    values(?, ?, ?, ?, ?)
+                    """,
+                    (
+                        user_profile.name,
+                        user_profile.work,
+                        user_profile.shortbreak,
+                        user_profile.longbreak,
+                        user_profile.cycle
+                        )
+            )
+            self.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
 
     def update_user(self, user_profile):
         self.cur.execute(

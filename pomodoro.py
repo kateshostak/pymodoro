@@ -117,7 +117,7 @@ class PymodoroManager():
         self.argparser = ArgParser()
         self.command, self.args = self.argparser.parse_args()
         self.orm = ORM.get_orm(ORM.SQLITE, 'new_pom.db')
-        self.orm = ORM.get_orm(ORM.JSON, 'data.json')
+        #self.orm = ORM.get_orm(ORM.JSON, 'data.json')
         self.command_to_func = {
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,
@@ -140,8 +140,11 @@ class PymodoroManager():
             self.loop.run_until_complete(pomodoro.start())
 
     def create_user(self):
-        self.orm.create_user(self.args)
-        print(f'User {self.args.name} was created')
+        res = self.orm.create_user(self.args)
+        if res:
+            print(f'User {self.args.name} was created')
+        else:
+            print(f'The user with name {self.args.name} already exists')
 
     def update_user(self):
         res = self.orm.update_user(self.args)
