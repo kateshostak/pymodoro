@@ -39,18 +39,17 @@ class JsonORM(object):
         users = self.load_json()
         if user.name in users:
             return False
-        else:
-            new_user = {
-                    'work': user.work,
-                    'shortbreak': user.shortbreak,
-                    'longbreak': user.longbreak,
-                    'cycle': user.cycle,
-                    'statistics': []
-                    }
-            users = self.load_json()
-            users[user.name] = new_user
-            self.write_json(users)
-            return True
+        new_user = {
+                'work': user.work,
+                'shortbreak': user.shortbreak,
+                'longbreak': user.longbreak,
+                'cycle': user.cycle,
+                'statistics': []
+                }
+        users = self.load_json()
+        users[user.name] = new_user
+        self.write_json(users)
+        return True
 
     def update_user(self, user):
         users = self.load_json()
