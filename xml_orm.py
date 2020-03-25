@@ -17,16 +17,30 @@ class XmlORM(object):
 
     def create_user(self, user):
         users = self.load_xml()
-        for usr in users:
-            if user.name in usr.attrib['name']:
-                return False
+        if user.name in users:
+            return False
+
         else:
-            pass
+            top = ET.Element('data')
+            usr = top.SubElement(top, 'user')
+            usr.set('name', user.name)
+            setting = top.SubElement(usr, 'setting')
+            setting.set('setting', user.setting)
+
 
     def load_xml(self):
-        root = ET.parse(self.path_to_db).getroot()
-        return [usr for usr in root]
+        users = ET.parse(self.path_to_db).getroot()
+        return {user.find('name').text:user for user in users}
 
-    def get_user(self, name):
+    def user_constructor(self, user_elem):
+        name = user_elem.find('name').text
+        settings = {setting.find('name'):setting for setting in user.elem.findall('settings')}
+
+
+    def get_user(self, name, setting):
         users = self.load_xml()
+        if name not in users:
+            return False
+        else:
+            return user_constructor(users[name])
 
