@@ -32,15 +32,22 @@ class XmlORM(object):
         users = ET.parse(self.path_to_db).getroot()
         return {user.find('name').text:user for user in users}
 
-    def user_constructor(self, user_elem):
-        name = user_elem.find('name').text
-        settings = {setting.find('name'):setting for setting in user.elem.findall('settings')}
-
+    def user_constructor(self, user_elem, setting):
+        settings = {setting.find('name').text:setting for setting in user.elem.findall('setting')}
+        if setting not in settings:
+            return False, [name for name in settings]
+        else:
+            name = user_elem.find('name').text
+            work = settings[setting].find('work')
+            shortbreak = settings[setting].find('shortbreak')
+            longbreak = settings[setting].find('longbreak')
+            cycle = settings[setting].find('cycle')
+        return User(None, name, work, shortbreak, longbreak, cycle)
 
     def get_user(self, name, setting):
         users = self.load_xml()
         if name not in users:
             return False
         else:
-            return user_constructor(users[name])
+            return user_constructor(users[name], setting)
 
