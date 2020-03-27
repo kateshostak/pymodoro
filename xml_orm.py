@@ -25,10 +25,18 @@ class XmlORM(object):
     def udate_user(self, user):
         users = self.load_xml()
         if user.name in users:
-            usr = users[user.name]
-
+            user_elem = users[user.name]
+            profile = self.get_xml_setting(user_elem, user.setting)
+            if profile:
+                self.update_setting(user, user_elem, profile)
             return True
         return False
+
+    def upadate_setting(self, user, user_elem, profile):
+        profile.find('work').text = str(user.work) or profile.find('work')
+        profile.find('shortbreak').text = str(user.shortbreak) or profile.find('shortbreak')
+        profile.find('lonbreak').text = str(user.longbreak) or profile.find('longbreak')
+        profile.find('cycle').text = str(user.cycle) or profile.find('cycle')
 
     def create_user(self, user):
         users = self.load_xml()
@@ -76,15 +84,18 @@ class XmlORM(object):
             return User(None, name, setting)
 
     def user_settings(self, user_elem, set_name):
-        settings = {setting.find('name').text: setting for setting in user_elem.findall('setting')} # noqa
-        if set_name in settings:
-            profile = settings[set_name]
+        profile = self.get_xml_setting(user_elem, set_name)
+        if profile:
             work = int(profile.find('work').text)
             shortbreak = int(profile.find('shortbreak').text)
             longbreak = int(profile.find('longbreak').text)
             cycle = int(profile.find('cycle').text)
             return Setting(set_name, work, shortbreak, longbreak, cycle)
         return None
+
+    def get_xml_setting(self, user_elem, set_name):
+        settings = {setting.find('name').text: setting for setting in user_elem.findall('setting')} # noqa
+        return settings[set_name]
 
     def get_user(self, name, setting):
         users = self.load_xml()
