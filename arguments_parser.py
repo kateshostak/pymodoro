@@ -16,7 +16,7 @@ class NewParser():
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('--name', required=True)
-        self.parser.add_argument('--settings', required=True)
+        self.parser.add_argument('--setting', required=True)
         self.parser.add_argument('--work', type=int, required=True)
         self.parser.add_argument('--shortbreak', type=int, required=True)
         self.parser.add_argument('--longbreak', type=int, required=True)
@@ -30,7 +30,7 @@ class UpdateParser():
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('--name', required=True)
-        self.parser.add_argument('--settings', required=True)
+        self.parser.add_argument('--setting', required=True)
         self.parser.add_argument('--work', type=int, default=None)
         self.parser.add_argument('--shortbreak', type=int, default=None)
         self.parser.add_argument('--longbreak', type=int, default=None)
