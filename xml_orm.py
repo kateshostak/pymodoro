@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from user import User
-
+from setting import Setting
 
 class XmlORM(object):
     def __init__(self, path_to_db):
@@ -19,57 +19,72 @@ class XmlORM(object):
     def create_xml(self, file_):
         ET.ElementTree(ET.Element('users')).write(self.path_to_db)
 
-    def udate_user(self, user):
+    def delete_user(self, user):
         pass
+
+    def udate_user(self, user):
+        users = self.load_xml()
+        if user.name in users:
+            usr = users[user.name]
+
+            return True
+        return False
 
     def create_user(self, user):
         users = self.load_xml()
         if user.name in users:
             return False
         else:
-            tree = ET.parse(self.path_to_db)
-            root = tree.getroot()
+            self.build_tree(user)
+        return True
 
-            usr = ET.Element('user')
-            name = ET.SubElement(usr, 'name')
-            name.text = user.name
+    def build_tree(self, user):
+        tree = ET.parse(self.path_to_db)
+        root = tree.getroot()
 
-            setting = ET.SubElement(usr, 'setting')
-            set_name = ET.SubElement(setting, 'name')
-            set_name.text = user.setting
+        usr = ET.Element('user')
+        name = ET.SubElement(usr, 'name')
+        name.text = user.name
 
-            work = ET.SubElement(setting, 'work')
-            work.text = str(user.work)
+        setting = ET.SubElement(usr, 'setting')
+        set_name = ET.SubElement(setting, 'name')
+        set_name.text = user.setting
 
-            shortbreak = ET.SubElement(setting, 'shortbreak')
-            shortbreak.text = str(user.shortbreak)
+        work = ET.SubElement(setting, 'work')
+        work.text = str(user.work)
 
-            longbreak = ET.SubElement(setting, 'longbreak')
-            longbreak.text = str(user.longbreak)
+        shortbreak = ET.SubElement(setting, 'shortbreak')
+        shortbreak.text = str(user.shortbreak)
 
-            cycle = ET.SubElement(setting, 'cycle')
-            cycle.text = str(user.cycle)
+        longbreak = ET.SubElement(setting, 'longbreak')
+        longbreak.text = str(user.longbreak)
 
-            root.append(usr)
-            tree.write(self.path_to_db)
-            return True
+        cycle = ET.SubElement(setting, 'cycle')
+        cycle.text = str(user.cycle)
+
+        root.append(usr)
+        tree.write(self.path_to_db)
 
     def load_xml(self):
         users = ET.parse(self.path_to_db).getroot()
         return {user.find('name').text: user for user in users}
 
-    def user_constructor(self, user_elem, setting):
-        settings = {setting.find('name').text: setting for setting in user_elem.findall('setting')} # noqa
-        if setting not in settings:
-            return False, [name for name in settings]
-        else:
+    def user_constructor(self, user_elem, set_name):
+        setting = self.user_settings(user_elem, set_name)
+        if setting:
             name = user_elem.find('name').text
-            profile = settings[setting]
+            return User(None, name, setting)
+
+    def user_settings(self, user_elem, set_name):
+        settings = {setting.find('name').text: setting for setting in user_elem.findall('setting')} # noqa
+        if set_name in settings:
+            profile = settings[set_name]
             work = int(profile.find('work').text)
             shortbreak = int(profile.find('shortbreak').text)
             longbreak = int(profile.find('longbreak').text)
             cycle = int(profile.find('cycle').text)
-        return User(None, name, work, shortbreak, longbreak, cycle)
+            return Setting(set_name, work, shortbreak, longbreak, cycle)
+        return None
 
     def get_user(self, name, setting):
         users = self.load_xml()

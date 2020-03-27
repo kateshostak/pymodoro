@@ -1,16 +1,10 @@
-class User(object):
+class User():
 
-    def __init__(self, id_, name, work, shortbreak, longbreak, cycle):
+    def __init__(self, id_, name, setting):
         self.id = id_
         self.name = name
-        self.work= work
-        self.shortbreak = shortbreak
-        self.longbreak = longbreak
-        self.cycle = cycle
+        self.setting = setting
 
     def __str__(self):
-        user_str = f'id::{self.id}, name::{self.name}'
-        return user_str
-
-    def update_param(self, param, value):
-        pass
+        user_str = f'id::{self.id}, name::{self.name}' # noqa
+        return user_str + str(self.setting)

@@ -42,9 +42,9 @@ class Pomodoro(object):
         self.orm = orm
 
         self.durations = {
-            Pomodoro.WORK: self.user.work,
-            Pomodoro.BREAK: self.user.shortbreak,
-            Pomodoro.LONG_BREAK: self.user.longbreak,
+            Pomodoro.WORK: self.user.setting.work,
+            Pomodoro.BREAK: self.user.setting.shortbreak,
+            Pomodoro.LONG_BREAK: self.user.setting.longbreak,
         }
 
         self.notifications = {
@@ -56,7 +56,7 @@ class Pomodoro(object):
         self.current_ticker = None
         self.current_activity = None
         self.current_counter = 0
-        self.cycle_len = self.user.cycle
+        self.cycle_len = self.user.setting.cycle
         self.is_paused = False
 
     def next(self):
@@ -118,7 +118,7 @@ class PymodoroManager():
         self.command, self.args = self.argparser.parse_args()
         self.orm = ORM.get_orm(ORM.SQLITE, 'new_pom.db')
         self.orm = ORM.get_orm(ORM.JSON, 'data.json')
-        # self.orm = ORM.get_orm(ORM.XML, 'data.xml')
+        self.orm = ORM.get_orm(ORM.XML, 'data.xml')
         self.command_to_func = {
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,
