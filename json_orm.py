@@ -70,10 +70,10 @@ class JsonORM(object):
     def update_json(self, users, user_profile):
         name = user_profile.name
         user = users[name]
-        users[name]['work'] = user_profile.work or user['work']
-        users[name]['shortbreak'] = user_profile.shortbreak or user['shortbreak']
-        users[name]['longbreak'] = user_profile.longbreak or user['longbreak']
-        users[name]['cycle'] = user_profile.cycle or user['cycle']
+        user['work'] = user_profile.work or user['work']
+        user['shortbreak'] = user_profile.shortbreak or user['shortbreak']
+        user['longbreak'] = user_profile.longbreak or user['longbreak']
+        user['cycle'] = user_profile.cycle or user['cycle']
 
     def record_pomodoro(self, user_profile, start_time):
         users = self.load_json()

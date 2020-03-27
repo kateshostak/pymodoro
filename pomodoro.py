@@ -97,7 +97,7 @@ class Pomodoro(object):
     def show_notification(self, text):
         print(text)
         subprocess.run([
-            "osascript", "-e", "display notification \"%s\" with title \"PyModoro\" sound name \"Submarine\"" % text
+            "osascript", "-e", "display notification \"%s\" with title \"PyModoro\" sound name \"Submarine\"" % text # noqa
         ])
 
     def toggle_pause(self):
@@ -117,7 +117,8 @@ class PymodoroManager():
         self.argparser = ArgParser()
         self.command, self.args = self.argparser.parse_args()
         self.orm = ORM.get_orm(ORM.SQLITE, 'new_pom.db')
-        #self.orm = ORM.get_orm(ORM.JSON, 'data.json')
+        self.orm = ORM.get_orm(ORM.JSON, 'data.json')
+        # self.orm = ORM.get_orm(ORM.XML, 'data.xml')
         self.command_to_func = {
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,
@@ -159,6 +160,7 @@ class PymodoroManager():
             print(f'User {self.args.name} was deleted')
         else:
             print(f'No user with name {self.args.name} was found')
+
 
 def user_input(q, pomodoro):
     asyncio.ensure_future(q.put(sys.stdin.readline()))
