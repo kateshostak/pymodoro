@@ -27,7 +27,8 @@ class XmlORM(object):
         if user.name in users:
             return False
         else:
-            tree = ET.parse(self.path_to_file)
+            tree = ET.parse(self.path_to_db)
+            root = tree.getroot()
 
             usr = ET.Element('user')
             name = ET.SubElement(usr, 'name')
@@ -38,22 +39,20 @@ class XmlORM(object):
             set_name.text = user.setting
 
             work = ET.SubElement(setting, 'work')
-            work.text = user.work
+            work.text = str(user.work)
 
             shortbreak = ET.SubElement(setting, 'shortbreak')
-            shortbreak.text = user.shortbreak
+            shortbreak.text = str(user.shortbreak)
 
-            longbreak = ET.SubEelemnt(setting, 'longbreak')
-            lonbreak.text = user.longbreak
+            longbreak = ET.SubElement(setting, 'longbreak')
+            longbreak.text = str(user.longbreak)
 
             cycle = ET.SubElement(setting, 'cycle')
-            cycle.text = user.cycle
+            cycle.text = str(user.cycle)
 
-            usr.set('name', user.name)
-            setting = top.SubElement(usr, 'setting')
-            setting.set('setting', user.setting)
-
-            tree.write(usr)
+            root.append(usr)
+            tree.write(self.path_to_db)
+            return True
 
     def load_xml(self):
         users = ET.parse(self.path_to_db).getroot()
