@@ -74,11 +74,13 @@ class ArgParser():
 class SubparserManager():
     RUN = 'run'
     NEW = 'new'
+    ADD = 'add'
     UPDATE = 'update'
     DELETE = 'delete'
     command_to_subparser = {
             RUN: RunParser,
             NEW: NewParser,
+            ADD: NewParser,
             UPDATE: UpdateParser,
             DELETE: DeleteParser
             }

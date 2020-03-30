@@ -110,6 +110,7 @@ class Pomodoro(object):
 class PymodoroManager():
     RUN = 'run'
     NEW = 'new'
+    ADD = 'add'
     DELETE = 'delete'
     UPDATE = 'update'
 
@@ -122,6 +123,7 @@ class PymodoroManager():
         self.command_to_func = {
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,
+                PymodoroManager.ADD: self.add_profile,
                 PymodoroManager.UPDATE: self.update_user,
                 PymodoroManager.DELETE: self.delete_user
         }
@@ -153,6 +155,13 @@ class PymodoroManager():
             print(f'User {self.args.name} was updated')
         else:
             print(f'No user with name {self.args.name} was found ')
+
+    def add_profile(self):
+        res = self.orm.add_profile(self.args.name, self.args.setting, self.args.work, self.args.shortbreak, self.args.longbreak, self.args.cycle) # noqa
+        if res:
+            print(f'Setting {self.args.setting} was added to user {self.args.name}')
+        else:
+            print(f'User setting with name {self.args.setting} already exists')
 
     def delete_user(self):
         res = self.orm.delete_user(self.args.name)

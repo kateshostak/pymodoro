@@ -86,6 +86,15 @@ class JsonORM(object):
             return True
         return False
 
+    def add_profile(self, name, setting, work, shortbreak, longbreak, cycle):
+        users = self.load_json()
+        if setting in users[name]:
+            return False
+        profile = self.create_profile(setting, work, shortbreak, longbreak, cycle)
+        users[name][setting] = profile
+        self.write_json(users)
+        return True
+
     def delete_user(self, name):
         users = self.load_json()
         if name in users:
