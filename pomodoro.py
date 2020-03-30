@@ -78,7 +78,7 @@ class Pomodoro(object):
             start_time = time.time()
             await self.start_activity(activity)
             if self.current_activity == Pomodoro.WORK:
-                self.orm.record_pomodoro(self.user, start_time)
+                self.orm.record_pomodoro(self.user.name, self.user.setting.name, self.user.setting.work, start_time) # noqa
 
     async def start_activity(self, activity):
         self.show_notification(self.notifications[activity])
@@ -141,7 +141,7 @@ class PymodoroManager():
             self.loop.run_until_complete(pomodoro.start())
 
     def create_user(self):
-        res = self.orm.create_user(self.args)
+        res = self.orm.create_user(self.args.name, self.args.setting, self.args.work, self.args.shortbreak, self.args.longbreak, self.args.cycle) # noqa
         if res:
             print(f'User {self.args.name} was created')
         else:

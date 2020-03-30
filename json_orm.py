@@ -47,7 +47,7 @@ class JsonORM(object):
         users = self.load_json()
         if name in users:
             return False
-        profile = self.new_profile(setting, work, shortbreak, longbreak, cycle)
+        profile = self.create_profile(setting, work, shortbreak, longbreak, cycle)
         new_user = {
                 setting: profile,
                 'statistics': []
@@ -90,9 +90,9 @@ class JsonORM(object):
         user['longbreak'] = longbreak or user['longbreak']
         user['cycle'] = cycle or user['cycle']
 
-    def record_pomodoro(self, name, work, start_time):
+    def record_pomodoro(self, name, setting, work, start_time):
         users = self.load_json()
-        stats = self.stats_dict(work, start_time)
+        stats = self.stats_dict(setting, work, start_time)
         users[name]['statistics'].append(stats)
         self.write_json(users)
 
