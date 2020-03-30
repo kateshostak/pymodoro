@@ -1,6 +1,6 @@
 import json
 from user import User
-
+from setting import Setting
 
 class JsonORM(object):
     def __init__(self, path_to_file):
@@ -31,25 +31,41 @@ class JsonORM(object):
         users_dict = self.load_json()
         if name in users_dict:
             user = users_dict[name]
-            return User(None, name, user['work'], user['shortbreak'], user['longbreak'], user['cycle'])
-        else:
-            return None
+            profile = self.get_profile(user, setting)
+            if profile:
+                return User(None, name, profile)
+        return None
 
-    def create_user(self, name, work, shortbreak, longbreak, cycle):
+    def get_profile(self, user, setting):
+        if setting in user:
+            profile = user[setting]
+            print(profile)
+            return Setting(setting, profile['work'], profile['shortbreak'], profile['longbreak'], profile['cycle'])
+        return None
+
+    def create_user(self, name, setting, work, shortbreak, longbreak, cycle):
         users = self.load_json()
         if name in users:
             return False
+        profile = self.new_profile(setting, work, shortbreak, longbreak, cycle)
         new_user = {
-                'work': work,
-                'shortbreak': shortbreak,
-                'longbreak': longbreak,
-                'cycle': cycle,
+                setting: profile,
                 'statistics': []
                 }
         users = self.load_json()
         users[name] = new_user
         self.write_json(users)
         return True
+
+    def create_profile(self, setting, work, shortbreak, longbreak, cycle):
+        profile = {
+                'setting': setting,
+                'work': work,
+                'shortbreak': shortbreak,
+                'longbreak': longbreak,
+                'cycle': cycle
+                }
+        return profile
 
     def update_user(self, name, work, shortbreak, longbreak, cycle):
         users = self.load_json()
@@ -80,8 +96,9 @@ class JsonORM(object):
         users[name]['statistics'].append(stats)
         self.write_json(users)
 
-    def stats_dict(self, work, start_time):
+    def stats_dict(self, setting, work, start_time):
         stats = {
+                'setting': setting,
                 'start_time': start_time,
                 'work_time': work
                 }
