@@ -148,7 +148,7 @@ class PymodoroManager():
             print(f'The user with name {self.args.name} already exists')
 
     def update_user(self):
-        res = self.orm.update_user(self.args)
+        res = self.orm.update_user(self.args.name, self.args.setting, self.args.work, self.args.shortbreak, self.args.longbreak, self.args.cycle) # noqa
         if res:
             print(f'User {self.args.name} was updated')
         else:

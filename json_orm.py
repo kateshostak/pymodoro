@@ -2,6 +2,7 @@ import json
 from user import User
 from setting import Setting
 
+
 class JsonORM(object):
     def __init__(self, path_to_file):
         self.type = 'json'
@@ -33,14 +34,13 @@ class JsonORM(object):
             user = users_dict[name]
             profile = self.get_profile(user, setting)
             if profile:
-                return User(None, name, profile)
+                setting = Setting(setting, profile['work'], profile['shortbreak'], profile['longbreak'], profile['cycle'])
+                return User(None, name, setting)
         return None
 
     def get_profile(self, user, setting):
         if setting in user:
-            profile = user[setting]
-            print(profile)
-            return Setting(setting, profile['work'], profile['shortbreak'], profile['longbreak'], profile['cycle'])
+            return user[setting]
         return None
 
     def create_user(self, name, setting, work, shortbreak, longbreak, cycle):
@@ -67,11 +67,22 @@ class JsonORM(object):
                 }
         return profile
 
-    def update_user(self, name, work, shortbreak, longbreak, cycle):
+    def update_user(self, name, setting, work, shortbreak, longbreak, cycle):
         users = self.load_json()
         if name in users:
-            self.update_json(users, name, work, shortbreak, longbreak, cycle)
-            self.write_json(users)
+            updated = self.update_profile(users[name], setting, work, shortbreak, longbreak, cycle)
+            if updated:
+                self.write_json(users)
+                return True
+        return False
+
+    def update_profile(self, user, setting, work, shortbreak, longbreak, cycle):
+        profile = self.get_profile(user, setting)
+        if profile:
+            profile['work'] = work or profile['work']
+            profile['shortbreak'] = shortbreak or profile['shortbreak']
+            profile['longbreak'] = longbreak or profile['longbreak']
+            profile['cycle'] = cycle or profile['cycle']
             return True
         return False
 
@@ -82,13 +93,6 @@ class JsonORM(object):
             self.write_json(users)
             return True
         return False
-
-    def update_json(self, users, name, work, shortbreak, longbreak, cycle):
-        user = users[name]
-        user['work'] = work or user['work']
-        user['shortbreak'] = shortbreak or user['shortbreak']
-        user['longbreak'] = longbreak or user['longbreak']
-        user['cycle'] = cycle or user['cycle']
 
     def record_pomodoro(self, name, setting, work, start_time):
         users = self.load_json()
