@@ -35,26 +35,26 @@ class JsonORM(object):
         else:
             return None
 
-    def create_user(self, user):
+    def create_user(self, name, work, shortbreak, longbreak, cycle):
         users = self.load_json()
-        if user.name in users:
+        if name in users:
             return False
         new_user = {
-                'work': user.work,
-                'shortbreak': user.shortbreak,
-                'longbreak': user.longbreak,
-                'cycle': user.cycle,
+                'work': work,
+                'shortbreak': shortbreak,
+                'longbreak': longbreak,
+                'cycle': cycle,
                 'statistics': []
                 }
         users = self.load_json()
-        users[user.name] = new_user
+        users[name] = new_user
         self.write_json(users)
         return True
 
-    def update_user(self, user):
+    def update_user(self, name, work, shortbreak, longbreak, cycle):
         users = self.load_json()
-        if user.name in users:
-            self.update_json(users, user)
+        if name in users:
+            self.update_json(users, name, work, shortbreak, longbreak, cycle)
             self.write_json(users)
             return True
         return False
@@ -67,23 +67,22 @@ class JsonORM(object):
             return True
         return False
 
-    def update_json(self, users, user_profile):
-        name = user_profile.name
+    def update_json(self, users, name, work, shortbreak, longbreak, cycle):
         user = users[name]
-        user['work'] = user_profile.work or user['work']
-        user['shortbreak'] = user_profile.shortbreak or user['shortbreak']
-        user['longbreak'] = user_profile.longbreak or user['longbreak']
-        user['cycle'] = user_profile.cycle or user['cycle']
+        user['work'] = work or user['work']
+        user['shortbreak'] = shortbreak or user['shortbreak']
+        user['longbreak'] = longbreak or user['longbreak']
+        user['cycle'] = cycle or user['cycle']
 
-    def record_pomodoro(self, user_profile, start_time):
+    def record_pomodoro(self, name, work, start_time):
         users = self.load_json()
-        stats = self.stats_dict(user_profile, start_time)
-        users[user_profile.name]['statistics'].append(stats)
+        stats = self.stats_dict(work, start_time)
+        users[name]['statistics'].append(stats)
         self.write_json(users)
 
-    def stats_dict(self, user_profile, start_time):
+    def stats_dict(self, work, start_time):
         stats = {
                 'start_time': start_time,
-                'work_time': user_profile.work
+                'work_time': work
                 }
         return stats
