@@ -95,6 +95,15 @@ class JsonORM(object):
         self.write_json(users)
         return True
 
+    def delete_profile(self, name, setting):
+        users = self.load_json()
+        if name in users:
+            if setting in users[name] and len(users[name]) > 2:
+                users[name].pop(setting)
+                self.write_json(users)
+                return True
+        return False
+
     def delete_user(self, name):
         users = self.load_json()
         if name in users:

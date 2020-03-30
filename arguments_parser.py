@@ -39,7 +39,6 @@ class UpdateParser():
     def parse_args(self, args):
         return self.parser.parse_args(args)
 
-
 class DeleteParser():
     def __init__(self):
         self.parser = argparse.ArgumentParser()
@@ -75,11 +74,13 @@ class SubparserManager():
     RUN = 'run'
     NEW = 'new'
     ADD = 'add'
+    RMP = 'rmp'
     UPDATE = 'update'
     DELETE = 'delete'
     command_to_subparser = {
             RUN: RunParser,
             NEW: NewParser,
+            RMP: RunParser,
             ADD: NewParser,
             UPDATE: UpdateParser,
             DELETE: DeleteParser

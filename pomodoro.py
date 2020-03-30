@@ -111,6 +111,7 @@ class PymodoroManager():
     RUN = 'run'
     NEW = 'new'
     ADD = 'add'
+    RMP = 'rmp'
     DELETE = 'delete'
     UPDATE = 'update'
 
@@ -124,6 +125,7 @@ class PymodoroManager():
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,
                 PymodoroManager.ADD: self.add_profile,
+                PymodoroManager.RMP: self.delete_profile,
                 PymodoroManager.UPDATE: self.update_user,
                 PymodoroManager.DELETE: self.delete_user
         }
@@ -162,6 +164,13 @@ class PymodoroManager():
             print(f'Setting {self.args.setting} was added to user {self.args.name}')
         else:
             print(f'User setting with name {self.args.setting} already exists')
+
+    def delete_profile(self):
+        res = self.orm.delete_profile(self.args.name, self.args.setting) # noqa
+        if res:
+            print(f'Setting {self.args.setting} was deleted from user {self.args.name}')
+        else:
+            print(f'User setting with name {self.args.setting} does not exist or is the only setting for user {self.args.name}') # noqa
 
     def delete_user(self):
         res = self.orm.delete_user(self.args.name)
