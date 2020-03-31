@@ -21,7 +21,7 @@ class XmlORM(object):
     def delete_user(self, name):
         users = self.load_xml()
         if name in users:
-            users[name].remove()
+            self.tree.getroot().remove(users[name])
             self.tree.write(self.path_to_db)
             return True
         return False
@@ -38,7 +38,6 @@ class XmlORM(object):
         return False
 
     def update_profile(self, user_elem, profile, work, shortbreak, longbreak, cycle):
-        print(f'work::{work}')
         profile.find('work').text = str(work) or profile.find('work')
         profile.find('shortbreak').text = str(shortbreak) or profile.find('shortbreak')
         profile.find('longbreak').text = str(longbreak) or profile.find('longbreak')
