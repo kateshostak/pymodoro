@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from user import User
-from setting import Setting
+from profile import Setting
+
 
 class XmlORM(object):
     def __init__(self, path_to_db):
@@ -13,29 +14,26 @@ class XmlORM(object):
             with open(self.path_to_db, 'r'):
                 pass
         except FileNotFoundError: # noqa
-            with open(self.path_to_db, 'w') as f:
-                self.create_xml(f)
-
-    def create_xml(self, file_):
-        ET.ElementTree(ET.Element('users')).write(self.path_to_db)
+            with open(self.path_to_db, 'w'):
+                ET.ElementTree(ET.Element('users')).write(self.path_to_db)
 
     def delete_user(self, user):
-        pass
+        user = self.get_user(self, user)
 
     def udate_user(self, user):
         users = self.load_xml()
         if user.name in users:
             user_elem = users[user.name]
-            profile = self.get_xml_setting(user_elem, user.setting)
+            profile = self.get_xml_profile(user_elem, user.profile)
             if profile:
-                self.update_setting(user, user_elem, profile)
+                self.update_profile(user, user_elem, profile)
             return True
         return False
 
-    def upadate_setting(self, user, user_elem, profile):
+    def upadate_profile(self, user, user_elem, profile):
         profile.find('work').text = str(user.work) or profile.find('work')
-        profile.find('shortbreak').text = str(user.shortbreak) or profile.find('shortbreak')
-        profile.find('lonbreak').text = str(user.longbreak) or profile.find('longbreak')
+        profile.find('shortbreak').text = str(user.shortbreak) or profile.find('shortbreak') # noqa
+        profile.find('lonbreak').text = str(user.longbreak) or profile.find('longbreak') # noqa
         profile.find('cycle').text = str(user.cycle) or profile.find('cycle')
 
     def create_user(self, user):
@@ -43,10 +41,10 @@ class XmlORM(object):
         if user.name in users:
             return False
         else:
-            self.build_tree(user)
+            self.user_xml(user)
         return True
 
-    def build_tree(self, user):
+    def user_xml(self, user):
         tree = ET.parse(self.path_to_db)
         root = tree.getroot()
 
@@ -54,20 +52,20 @@ class XmlORM(object):
         name = ET.SubElement(usr, 'name')
         name.text = user.name
 
-        setting = ET.SubElement(usr, 'setting')
-        set_name = ET.SubElement(setting, 'name')
-        set_name.text = user.setting
+        profile = ET.SubElement(usr, 'profile')
+        set_name = ET.SubElement(profile, 'name')
+        set_name.text = user.profile
 
-        work = ET.SubElement(setting, 'work')
+        work = ET.SubElement(profile, 'work')
         work.text = str(user.work)
 
-        shortbreak = ET.SubElement(setting, 'shortbreak')
+        shortbreak = ET.SubElement(profile, 'shortbreak')
         shortbreak.text = str(user.shortbreak)
 
-        longbreak = ET.SubElement(setting, 'longbreak')
+        longbreak = ET.SubElement(profile, 'longbreak')
         longbreak.text = str(user.longbreak)
 
-        cycle = ET.SubElement(setting, 'cycle')
+        cycle = ET.SubElement(profile, 'cycle')
         cycle.text = str(user.cycle)
 
         root.append(usr)
@@ -77,14 +75,14 @@ class XmlORM(object):
         users = ET.parse(self.path_to_db).getroot()
         return {user.find('name').text: user for user in users}
 
-    def user_constructor(self, user_elem, set_name):
-        setting = self.user_settings(user_elem, set_name)
-        if setting:
+    def make_user(self, user_elem, pr_name):
+        profile = self.make_profiles(user_elem, pr_name)
+        if profile:
             name = user_elem.find('name').text
-            return User(None, name, setting)
+            return User(None, name, profile)
 
-    def user_settings(self, user_elem, set_name):
-        profile = self.get_xml_setting(user_elem, set_name)
+    def make_profile(self, user_elem, pr_name):
+        profile = self.profile_xml(user_elem, pr_name)
         if profile:
             work = int(profile.find('work').text)
             shortbreak = int(profile.find('shortbreak').text)
@@ -93,13 +91,13 @@ class XmlORM(object):
             return Setting(set_name, work, shortbreak, longbreak, cycle)
         return None
 
-    def get_xml_setting(self, user_elem, set_name):
-        settings = {setting.find('name').text: setting for setting in user_elem.findall('setting')} # noqa
-        return settings[set_name]
+    def profile_xml(self, user_elem, pr_name):
+        profiles = {profile.find('name').text: profile for profile in user_elem.findall('profile')} # noqa
+        return profiles[set_name]
 
-    def get_user(self, name, setting):
+    def get_user(self, name, pr_name):
         users = self.load_xml()
         if name not in users:
             return False
         else:
-            return self.user_constructor(users[name], setting)
+            return self.make_user(users[name], pr_name)
