@@ -1,6 +1,6 @@
 import json
 from user import User
-from setting import Setting
+from setting import Profile
 
 
 class JsonORM(object):

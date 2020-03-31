@@ -118,9 +118,9 @@ class PymodoroManager():
     def __init__(self):
         self.argparser = ArgParser()
         self.command, self.args = self.argparser.parse_args()
-        self.orm = ORM.get_orm(ORM.SQLITE, 'new_pom.db')
-        self.orm = ORM.get_orm(ORM.JSON, 'data.json')
-        # self.orm = ORM.get_orm(ORM.XML, 'data.xml')
+        # self.orm = ORM.get_orm(ORM.SQLITE, 'new_pom.db')
+        # self.orm = ORM.get_orm(ORM.JSON, 'data.json')
+        self.orm = ORM.get_orm(ORM.XML, 'data.xml')
         self.command_to_func = {
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,

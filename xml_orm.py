@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from user import User
-from profile import Setting
+from setting import Profile
 
 
 class XmlORM(object):
@@ -32,8 +32,8 @@ class XmlORM(object):
 
     def upadate_profile(self, user, user_elem, profile):
         profile.find('work').text = str(user.work) or profile.find('work')
-        profile.find('shortbreak').text = str(user.shortbreak) or profile.find('shortbreak') # noqa
-        profile.find('lonbreak').text = str(user.longbreak) or profile.find('longbreak') # noqa
+        profile.find('shortbreak').text = str(user.shortbreak) or profile.find('shortbreak')
+        profile.find('lonbreak').text = str(user.longbreak) or profile.find('longbreak')
         profile.find('cycle').text = str(user.cycle) or profile.find('cycle')
 
     def create_user(self, user):
@@ -76,7 +76,7 @@ class XmlORM(object):
         return {user.find('name').text: user for user in users}
 
     def make_user(self, user_elem, pr_name):
-        profile = self.make_profiles(user_elem, pr_name)
+        profile = self.make_profile(user_elem, pr_name)
         if profile:
             name = user_elem.find('name').text
             return User(None, name, profile)
@@ -88,12 +88,14 @@ class XmlORM(object):
             shortbreak = int(profile.find('shortbreak').text)
             longbreak = int(profile.find('longbreak').text)
             cycle = int(profile.find('cycle').text)
-            return Setting(set_name, work, shortbreak, longbreak, cycle)
+            return Profile(pr_name, work, shortbreak, longbreak, cycle)
         return None
 
     def profile_xml(self, user_elem, pr_name):
-        profiles = {profile.find('name').text: profile for profile in user_elem.findall('profile')} # noqa
-        return profiles[set_name]
+        profiles = {profile.find('name').text: profile for profile in user_elem.findall('profile')}
+        if pr_name in profiles:
+            return profiles[pr_name]
+        return None
 
     def get_user(self, name, pr_name):
         users = self.load_xml()
