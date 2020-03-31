@@ -28,14 +28,14 @@ class JsonORM(object):
             except ValueError:
                 return dict()
 
-    def get_user(self, name, setting):
+    def get_user(self, name, pr_name):
         users_dict = self.load_json()
         if name in users_dict:
             user = users_dict[name]
-            profile = self.get_profile(user, setting)
-            if profile:
-                setting = Setting(setting, profile['work'], profile['shortbreak'], profile['longbreak'], profile['cycle'])
-                return User(None, name, setting)
+            pr = self.get_profile(user, pr_name)
+            if pr:
+                pr_name = Profile(pr_name, pr['work'], pr['shortbreak'], pr['longbreak'], pr['cycle'])
+                return User(None, name, pr_name)
         return None
 
     def get_profile(self, user, setting):
