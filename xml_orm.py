@@ -8,6 +8,7 @@ class XmlORM(object):
         self.type = 'xml'
         self.path_to_db = path_to_db
         self.create_db()
+        self.tree = ET.parse(self.path_to_db)
 
     def create_db(self):
         try:
@@ -17,63 +18,68 @@ class XmlORM(object):
             with open(self.path_to_db, 'w'):
                 ET.ElementTree(ET.Element('users')).write(self.path_to_db)
 
-    def delete_user(self, user):
-        user = self.get_user(self, user)
-
-    def udate_user(self, user):
+    def delete_user(self, name):
         users = self.load_xml()
-        if user.name in users:
-            user_elem = users[user.name]
-            profile = self.get_xml_profile(user_elem, user.profile)
-            if profile:
-                self.update_profile(user, user_elem, profile)
+        if name in users:
+            users[name].remove()
+            self.tree.write(self.path_to_db)
             return True
         return False
 
-    def upadate_profile(self, user, user_elem, profile):
-        profile.find('work').text = str(user.work) or profile.find('work')
-        profile.find('shortbreak').text = str(user.shortbreak) or profile.find('shortbreak')
-        profile.find('lonbreak').text = str(user.longbreak) or profile.find('longbreak')
-        profile.find('cycle').text = str(user.cycle) or profile.find('cycle')
-
-    def create_user(self, user):
+    def update_user(self, name, pr_name, work, shortbreak, longbreak, cycle):
         users = self.load_xml()
-        if user.name in users:
+        if name in users:
+            user_elem = users[name]
+            profile = self.profile_xml(user_elem, pr_name)
+            if profile:
+                self.update_profile(user_elem, profile, work, shortbreak, longbreak, cycle)
+                self.tree.write(self.path_to_db)
+            return True
+        return False
+
+    def update_profile(self, user_elem, profile, work, shortbreak, longbreak, cycle):
+        print(f'work::{work}')
+        profile.find('work').text = str(work) or profile.find('work')
+        profile.find('shortbreak').text = str(shortbreak) or profile.find('shortbreak')
+        profile.find('longbreak').text = str(longbreak) or profile.find('longbreak')
+        profile.find('cycle').text = str(cycle) or profile.find('cycle')
+
+    def create_user(self, name, pr_name, shortbreak, longbreak, cycle):
+        users = self.load_xml()
+        if name in users:
             return False
         else:
-            self.user_xml(user)
+            self.user_xml(name, pr_name, shortbreak, longbreak, cycle)
         return True
 
-    def user_xml(self, user):
-        tree = ET.parse(self.path_to_db)
-        root = tree.getroot()
+    def user_xml(self, name, pr_name, shortbreak, longbreak, cycle):
+        root = self.tree.getroot()
 
         usr = ET.Element('user')
         name = ET.SubElement(usr, 'name')
-        name.text = user.name
+        name.text = name
 
         profile = ET.SubElement(usr, 'profile')
         set_name = ET.SubElement(profile, 'name')
-        set_name.text = user.profile
+        set_name.text = pr_name
 
         work = ET.SubElement(profile, 'work')
-        work.text = str(user.work)
+        work.text = str(work)
 
         shortbreak = ET.SubElement(profile, 'shortbreak')
-        shortbreak.text = str(user.shortbreak)
+        shortbreak.text = str(shortbreak)
 
         longbreak = ET.SubElement(profile, 'longbreak')
-        longbreak.text = str(user.longbreak)
+        longbreak.text = str(longbreak)
 
         cycle = ET.SubElement(profile, 'cycle')
-        cycle.text = str(user.cycle)
+        cycle.text = str(cycle)
 
         root.append(usr)
-        tree.write(self.path_to_db)
+        self.tree.write(self.path_to_db)
 
     def load_xml(self):
-        users = ET.parse(self.path_to_db).getroot()
-        return {user.find('name').text: user for user in users}
+        return {user.find('name').text: user for user in self.tree.getroot()}
 
     def make_user(self, user_elem, pr_name):
         profile = self.make_profile(user_elem, pr_name)
