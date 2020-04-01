@@ -1,3 +1,4 @@
+import pdb
 import xml.etree.ElementTree as ET
 from user import User
 from setting import Profile
@@ -41,12 +42,30 @@ class XmlORM(object):
             if profile:
                 self.update_profile(user_elem, profile, work, shortbreak, longbreak, cycle)
                 self.tree.write(self.path_to_db)
-            return True
+                return True
+        return False
 
     def add_profile(self, name, pr_name, work, shortbreak, longbreak, cycle):
         users = self.load_xml()
         if name in users:
-            users[name].append(self.build_xml_stats)
+            user = users[name]
+            if not self.profile_xml(user, pr_name):
+                profile = self.build_profile_xml(pr_name, work, shortbreak, longbreak, cycle)
+                user.find('settings').append(profile)
+                self.tree.write(self.path_to_db)
+                return True
+        return False
+
+    def delete_profile(self, name, pr_name):
+        users = self.load_xml()
+        if name in users:
+            user = users[name]
+            profiles = {pr.find('name').text:pr for pr in user.find('settings')}
+            if pr_name in profiles and len(profiles) > 1:
+                user.find('settings').remove(profiles[pr_name])
+                self.tree.write(self.path_to_db)
+                return True
+        return False
 
     def update_profile(self, user_elem, profile, work, shortbreak, longbreak, cycle):
         profile.find('work').text = str(work) or profile.find('work').text
