@@ -48,7 +48,7 @@ class JsonORM(object):
         users = self.load_json()
         if name in users:
             return False
-        profile = self.create_profile(pr_name, work, shortbreak, longbreak, cycle)
+        profile = self.create_profile(work, shortbreak, longbreak, cycle)
         new_user = {
                 'settings': {pr_name: profile},
                 'statistics': []
@@ -58,9 +58,8 @@ class JsonORM(object):
         self.write_json(users)
         return True
 
-    def create_profile(self, setting, work, shortbreak, longbreak, cycle):
+    def create_profile(self, work, shortbreak, longbreak, cycle):
         profile = {
-                'setting': setting,
                 'work': work,
                 'shortbreak': shortbreak,
                 'longbreak': longbreak,
@@ -68,17 +67,17 @@ class JsonORM(object):
                 }
         return profile
 
-    def update_user(self, name, setting, work, shortbreak, longbreak, cycle):
+    def update_user(self, name, pr_name, work, shortbreak, longbreak, cycle):
         users = self.load_json()
         if name in users:
-            updated = self.update_profile(users[name], setting, work, shortbreak, longbreak, cycle)
+            updated = self.update_profile(users[name], pr_name, work, shortbreak, longbreak, cycle)
             if updated:
                 self.write_json(users)
                 return True
         return False
 
-    def update_profile(self, user, setting, work, shortbreak, longbreak, cycle):
-        profile = self.get_profile(user, setting)
+    def update_profile(self, user, pr_name, work, shortbreak, longbreak, cycle):
+        profile = self.get_profile(user, pr_name)
         if profile:
             profile['work'] = work or profile['work']
             profile['shortbreak'] = shortbreak or profile['shortbreak']
@@ -91,7 +90,7 @@ class JsonORM(object):
         users = self.load_json()
         if pr_name in users[name]['settings']:
             return False
-        profile = self.create_profile(pr_name, work, shortbreak, longbreak, cycle)
+        profile = self.create_profile(work, shortbreak, longbreak, cycle)
         users[name]['settings'][pr_name] = profile
         self.write_json(users)
         return True
@@ -99,8 +98,8 @@ class JsonORM(object):
     def delete_profile(self, name, pr_name):
         users = self.load_json()
         if name in users:
-            if pr_name in users[name]['settings'] and len(users[name]['settings']) > 2:
-                users[name]['settings'].pop(setting)
+            if pr_name in users[name]['settings'] and len(users[name]['settings']) > 1:
+                users[name]['settings'].pop(pr_name)
                 self.write_json(users)
                 return True
         return False
