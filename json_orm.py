@@ -1,3 +1,4 @@
+import pdb
 import json
 from user import User
 from setting import Profile
@@ -38,18 +39,18 @@ class JsonORM(object):
                 return User(None, name, pr_name)
         return None
 
-    def get_profile(self, user, setting):
-        if setting in user:
-            return user[setting]
+    def get_profile(self, user, pr_name):
+        if pr_name in user['settings']:
+            return user['settings'][pr_name]
         return None
 
-    def create_user(self, name, setting, work, shortbreak, longbreak, cycle):
+    def create_user(self, name, pr_name, work, shortbreak, longbreak, cycle):
         users = self.load_json()
         if name in users:
             return False
-        profile = self.create_profile(setting, work, shortbreak, longbreak, cycle)
+        profile = self.create_profile(pr_name, work, shortbreak, longbreak, cycle)
         new_user = {
-                setting: profile,
+                'settings': {pr_name: profile},
                 'statistics': []
                 }
         users = self.load_json()
@@ -86,20 +87,20 @@ class JsonORM(object):
             return True
         return False
 
-    def add_profile(self, name, setting, work, shortbreak, longbreak, cycle):
+    def add_profile(self, name, pr_name, work, shortbreak, longbreak, cycle):
         users = self.load_json()
-        if setting in users[name]:
+        if pr_name in users[name]['settings']:
             return False
-        profile = self.create_profile(setting, work, shortbreak, longbreak, cycle)
-        users[name][setting] = profile
+        profile = self.create_profile(pr_name, work, shortbreak, longbreak, cycle)
+        users[name]['settings'][pr_name] = profile
         self.write_json(users)
         return True
 
-    def delete_profile(self, name, setting):
+    def delete_profile(self, name, pr_name):
         users = self.load_json()
         if name in users:
-            if setting in users[name] and len(users[name]) > 2:
-                users[name].pop(setting)
+            if pr_name in users[name]['settings'] and len(users[name]['settings']) > 2:
+                users[name]['settings'].pop(setting)
                 self.write_json(users)
                 return True
         return False
