@@ -1,3 +1,4 @@
+import pdb
 import xml.etree.ElementTree as ET
 from user import User
 from setting import Profile
@@ -18,6 +19,13 @@ class XmlORM(object):
             with open(self.path_to_db, 'w'):
                 ET.ElementTree(ET.Element('users')).write(self.path_to_db)
 
+    def record_pomodoro(self, name, pr_name, start_time, duration):
+        users = self.load_xml()
+        if name in users:
+            stats = users[name].find('statistics')
+            stats.append(self.build_stats_xml(pr_name, start_time, duration))
+            self.tree.write(self.path_to_db)
+
     def delete_user(self, name):
         users = self.load_xml()
         if name in users:
@@ -35,47 +43,49 @@ class XmlORM(object):
                 self.update_profile(user_elem, profile, work, shortbreak, longbreak, cycle)
                 self.tree.write(self.path_to_db)
             return True
-        return False
+
+    def add_profile(self, name, pr_name, work, shortbreak, longbreak, cycle):
+        users = self.load_xml()
+        if name in users:
+            users[name].append(self.build_xml_stats)
 
     def update_profile(self, user_elem, profile, work, shortbreak, longbreak, cycle):
-        profile.find('work').text = str(work) or profile.find('work')
-        profile.find('shortbreak').text = str(shortbreak) or profile.find('shortbreak')
-        profile.find('longbreak').text = str(longbreak) or profile.find('longbreak')
-        profile.find('cycle').text = str(cycle) or profile.find('cycle')
+        profile.find('work').text = str(work) or profile.find('work').text
+        profile.find('shortbreak').text = str(shortbreak) or profile.find('shortbreak').text
+        profile.find('longbreak').text = str(longbreak) or profile.find('longbreak').text
+        profile.find('cycle').text = str(cycle) or profile.find('cycle').text
 
-    def create_user(self, name, pr_name, shortbreak, longbreak, cycle):
+    def create_user(self, name, pr_name, work, shortbreak, longbreak, cycle):
         users = self.load_xml()
         if name in users:
             return False
-        else:
-            self.user_xml(name, pr_name, shortbreak, longbreak, cycle)
+        self.build_user_xml(name, pr_name, work, shortbreak, longbreak, cycle)
         return True
 
-    def user_xml(self, name, pr_name, shortbreak, longbreak, cycle):
+    def build_user_xml(self, name, pr_name, work, shortbreak, longbreak, cycle):
         root = self.tree.getroot()
-
         usr = ET.Element('user')
-        name = ET.SubElement(usr, 'name')
-        name.text = name
-
-        profile = ET.SubElement(usr, 'profile')
-        set_name = ET.SubElement(profile, 'name')
-        set_name.text = pr_name
-
-        work = ET.SubElement(profile, 'work')
-        work.text = str(work)
-
-        shortbreak = ET.SubElement(profile, 'shortbreak')
-        shortbreak.text = str(shortbreak)
-
-        longbreak = ET.SubElement(profile, 'longbreak')
-        longbreak.text = str(longbreak)
-
-        cycle = ET.SubElement(profile, 'cycle')
-        cycle.text = str(cycle)
-
+        ET.SubElement(usr, 'name').text = name
+        ET.SubElement(usr, 'settings').append(self.build_profile_xml(pr_name, work, shortbreak, longbreak, cycle))
+        ET.SubElement(usr, 'statistics')
         root.append(usr)
         self.tree.write(self.path_to_db)
+
+    def build_stats_xml(self, pr_name, start_time, duration):
+        data = ET.Element('data')
+        ET.SubElement(data, 'name').text = pr_name
+        ET.SubElement(data, 'timestamp').text = str(start_time)
+        ET.SubElement(data, 'duration').text = str(duration)
+        return data
+
+    def build_profile_xml(self, pr_name, work, shortbreak, longbreak, cycle):
+        profile = ET.Element('profile')
+        ET.SubElement(profile, 'name').text = pr_name
+        ET.SubElement(profile, 'work').text = str(work)
+        ET.SubElement(profile, 'shortbreak').text = str(shortbreak)
+        ET.SubElement(profile, 'longbreak').text = str(longbreak)
+        ET.SubElement(profile, 'cycle').text = str(cycle)
+        return profile
 
     def load_xml(self):
         return {user.find('name').text: user for user in self.tree.getroot()}
@@ -97,7 +107,7 @@ class XmlORM(object):
         return None
 
     def profile_xml(self, user_elem, pr_name):
-        profiles = {profile.find('name').text: profile for profile in user_elem.findall('profile')}
+        profiles = {profile.find('name').text: profile for profile in user_elem.find('settings')}
         if pr_name in profiles:
             return profiles[pr_name]
         return None
