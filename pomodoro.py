@@ -2,10 +2,7 @@ import sys
 import subprocess
 import time
 import asyncio
-import argparse
-from collections import namedtuple
 
-from user import User
 from orm import ORM
 from arguments_parser import ArgParser
 
@@ -78,7 +75,7 @@ class Pomodoro(object):
             start_time = time.time()
             await self.start_activity(activity)
             if self.current_activity == Pomodoro.WORK:
-                self.orm.record_pomodoro(self.user.name, self.user.setting.name, self.user.setting.work, start_time) # noqa
+                self.orm.record_pomodoro(self.user.name, self.user.setting.name, self.user.setting.work*60, start_time)  # noqa
 
     async def start_activity(self, activity):
         self.show_notification(self.notifications[activity])
@@ -119,8 +116,8 @@ class PymodoroManager():
         self.argparser = ArgParser()
         self.command, self.args = self.argparser.parse_args()
         # self.orm = ORM.get_orm(ORM.SQLITE, 'new_pom.db')
-        # self.orm = ORM.get_orm(ORM.JSON, 'data.json')
-        self.orm = ORM.get_orm(ORM.XML, 'data.xml')
+        self.orm = ORM.get_orm(ORM.JSON, 'data.json')
+        # self.orm = ORM.get_orm(ORM.XML, 'data.xml')
         self.command_to_func = {
                 PymodoroManager.RUN: self.start_pymodoro,
                 PymodoroManager.NEW: self.create_user,
@@ -145,14 +142,14 @@ class PymodoroManager():
             self.loop.run_until_complete(pomodoro.start())
 
     def create_user(self):
-        res = self.orm.create_user(self.args.name, self.args.setting, self.args.work, self.args.shortbreak, self.args.longbreak, self.args.cycle) # noqa
+        res = self.orm.create_user(self.args.name, self.args.setting, self.args.work*60, self.args.shortbreak*60, self.args.longbreak*60, self.args.cycle) # noqa
         if res:
             print(f'User {self.args.name} was created')
         else:
             print(f'The user with name {self.args.name} already exists')
 
     def update_user(self):
-        res = self.orm.update_user(self.args.name, self.args.setting, self.args.work, self.args.shortbreak, self.args.longbreak, self.args.cycle) # noqa
+        res = self.orm.update_user(self.args.name, self.args.setting, self.args.work*60, self.args.shortbreak*60, self.args.longbreak*60, self.args.cycle) # noqa
         if res:
             print(f'User {self.args.name} was updated')
         else:
@@ -184,10 +181,14 @@ def user_input(q, pomodoro):
     asyncio.ensure_future(q.put(sys.stdin.readline()))
     pomodoro.toggle_pause()
 
-
 def main():
     manager = PymodoroManager()
-    manager.start()
+
+    try:
+        manager.start()
+    except KeyboardInterrupt:
+        print('\nThank you for killing me <3')
+        return
     # parser = Parser()
     # common_options, command, command_options = parser.parse()
     #
